@@ -1,0 +1,2618 @@
+:root {
+    --primary: #2f6c46;
+    --secondary: #478252;
+    --accent: #599d5e;
+    --success: #96c77a;
+    --warning: #f59e0b;
+    --danger: #e74c3c;
+    --light: #f8f9fa;
+    --dark: #2f6c46;
+    --gray: #6c8789;
+    --sidebar-width: 280px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #599d5e 0%, #478252 100%);
+    color: var(--dark);
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+/* Login Screen */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-card {
+    background: white;
+    border-radius: 15px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Logo Styles */
+.logo-image {
+    max-width: 200px;
+    height: auto;
+    margin-bottom: 20px;
+}
+
+.logo-image-small {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.login-logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.logo-icon {
+    background: rgba(255, 255, 255, 0.2);
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+}
+
+.logo-icon img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--dark);
+    position: relative;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: all 0.3s;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(89, 157, 94, 0.1);
+}
+
+/* Main App */
+.app-container {
+    display: none;
+    flex: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.app-container.active {
+    display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    background: linear-gradient(180deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    transition: all 0.3s ease;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logo h1 {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: bold;
+    font-size: 20px;
+    color: white;
+}
+
+.user-role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: var(--success);
+    border-radius: 12px;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.nav-menu {
+    list-style: none;
+    margin-bottom: 30px;
+}
+
+.nav-item {
+    margin-bottom: 10px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    padding: 14px 18px;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.nav-link:hover, .nav-link.active {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateX(5px);
+}
+
+.nav-icon {
+    margin-right: 12px;
+    font-size: 20px;
+    width: 24px;
+    text-align: center;
+}
+
+.online-users {
+    margin-top: auto;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.online-users h3 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.online-users h3 i {
+    margin-right: 8px;
+}
+
+.user-list {
+    list-style: none;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.user-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    margin-right: 12px;
+    position: relative;
+}
+
+.user-status::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--success);
+    opacity: 0.4;
+    top: -2px;
+    left: -2px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.2); opacity: 0.2; }
+    100% { transform: scale(1); opacity: 0.4; }
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--light);
+    overflow: auto;
+}
+
+.page {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    padding: 30px;
+}
+
+.page.active {
+    display: flex;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.header h2 {
+    font-size: 26px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+}
+
+.header h2 i {
+    margin-right: 12px;
+    background: var(--primary);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    transition: all 0.3s;
+    font-size: 15px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(47, 108, 70, 0.4);
+}
+
+.btn-success {
+    background: var(--success);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #7bb861;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(150, 199, 122, 0.4);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.btn-icon {
+    margin-right: 8px;
+    font-size: 16px;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* Document Area */
+.document-area {
+    display: flex;
+    flex: 1;
+    gap: 30px;
+    min-height: 900px;
+    flex-direction: column;
+}
+
+/* Visor de Documentos */
+.document-viewer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    min-height: 800px;
+    border: 1px solid #e1e5e9;
+}
+
+.viewer-header {
+    padding: 25px 30px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    min-width: 300px;
+}
+
+.document-selector {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 300px;
+    cursor: pointer;
+    flex: 1;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.document-selector:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.document-selector:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.document-selector option {
+    background: white;
+    color: var(--dark);
+    padding: 8px;
+}
+
+.viewer-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-right: 25px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 15px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+.zoom-level {
+    font-size: 16px;
+    color: white;
+    min-width: 80px;
+    text-align: center;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.zoom-controls .btn {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.zoom-controls .btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+#addSignatureBtn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+#addSignatureBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* MEJORAS PARA EL VISOR DE DOCUMENTOS - TAMAÑO REAL */
+.viewer-content {
+    flex: 1;
+    position: relative;
+    background: #f8f9fa;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    min-height: 800px;
+    padding: 20px;
+}
+
+/* MEJORA IMPORTANTE: Contenedor del documento con tamaño natural */
+.document-container {
+    position: relative;
+    margin: 0;
+    box-shadow: 
+        0 5px 15px rgba(0, 0, 0, 0.1),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    background: white;
+    display: none;
+    overflow: auto;
+    border-radius: 12px;
+    transition: none;
+    will-change: transform;
+}
+
+/* El canvas debe mantener su tamaño natural */
+#documentCanvas {
+    display: block;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 8px;
+    background: white;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+}
+
+/* Capa de firmas debe coincidir exactamente con el canvas */
+.signature-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    transition: none;
+    will-change: transform;
+}
+
+/* Las firmas individuales deben mantener posición relativa */
+.document-signature {
+    position: absolute;
+    border: 2px dashed var(--primary);
+    background: rgba(47, 108, 70, 0.1);
+    cursor: move;
+    z-index: 10;
+    pointer-events: all;
+    transition: none;
+    min-width: 100px;
+    min-height: 50px;
+    box-sizing: border-box;
+    will-change: transform;
+}
+
+/* Asegurar que las imágenes de firma mantengan su aspecto */
+.document-signature img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    background: transparent !important;
+}
+
+/* Estados de zoom para el contenedor */
+.document-container.zooming {
+    transition: transform 0.3s ease;
+}
+
+/* Mejorar la barra de scroll para documentos grandes */
+.viewer-content::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.viewer-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.viewer-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.viewer-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejorar la visualización cuando no hay documento */
+.no-document {
+    text-align: center;
+    padding: 100px 40px;
+    color: #6c8789;
+    background: white;
+    border-radius: 16px;
+    margin: 20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    border: 2px dashed #e1e5e9;
+}
+
+.no-document-icon {
+    font-size: 96px;
+    margin-bottom: 30px;
+    color: #e1e5e9;
+    opacity: 0.7;
+}
+
+.no-document h3 {
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.no-document p {
+    font-size: 18px;
+    color: var(--gray);
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Panel de Firma */
+.signature-panel {
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    max-height: 400px;
+}
+
+.panel-header {
+    padding: 18px 25px;
+    background: var(--primary);
+    color: white;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.panel-header i {
+    margin-right: 10px;
+}
+
+.signature-area {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.signature-tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e1e5e9;
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.signature-tab {
+    flex: 1;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--gray);
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    font-size: 14px;
+    text-align: center;
+}
+
+.signature-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    background: white;
+}
+
+.signature-tab:hover:not(.active) {
+    background: rgba(47, 108, 70, 0.1);
+    color: var(--primary);
+}
+
+.signature-tab-content {
+    display: none;
+}
+
+.signature-tab-content.active {
+    display: block;
+}
+
+.signature-instructions {
+    margin-bottom: 15px;
+    color: var(--gray);
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+/* Estilos para la firma automática */
+.auto-signature-area {
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.auto-signature-preview {
+    background: transparent !important;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 15px;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.signature-info-auto {
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 15px;
+    font-size: 12px;
+}
+
+.signature-info-auto p {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2f6c46;
+}
+
+.signature-info-auto ul {
+    margin: 0;
+    padding-left: 15px;
+    color: #666;
+}
+
+.signature-info-auto li {
+    margin-bottom: 4px;
+}
+
+.upload-signature-area {
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    background: #fafafa;
+    transition: all 0.3s;
+    cursor: pointer;
+    min-height: 120px;
+}
+
+.upload-signature-area:hover {
+    border-color: var(--primary);
+    background: #f0f7f0;
+}
+
+.upload-signature-icon {
+    font-size: 36px;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+.upload-signature-text {
+    margin-bottom: 10px;
+    color: var(--gray);
+    font-size: 14px;
+}
+
+.signature-file-input {
+    display: none;
+}
+
+.signature-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.signature-preview {
+    margin-top: auto;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.preview-title {
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.preview-title i {
+    margin-right: 6px;
+    color: var(--primary);
+}
+
+.signature-img {
+    max-width: 100%;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    display: none;
+    margin: 0 auto;
+    max-height: 80px;
+    object-fit: contain;
+    background: transparent !important;
+}
+
+.no-signature {
+    color: var(--gray);
+    font-style: italic;
+    padding: 15px;
+    font-size: 13px;
+}
+
+.signature-info {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--gray);
+    display: none;
+}
+
+/* Firmas en la parte inferior */
+.signatures-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.signatures-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: var(--primary);
+    color: white;
+}
+
+.signatures-header h3 {
+    margin: 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.signatures-header h3 i {
+    margin-right: 8px;
+}
+
+.signature-actions-sidebar {
+    display: flex;
+    gap: 8px;
+}
+
+.signatures-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    padding: 15px;
+    background: #f8f9fa;
+    min-height: 80px;
+}
+
+.signature-badge {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s;
+}
+
+.signature-badge:hover {
+    background: #f0f7f0;
+    transform: translateY(-2px);
+}
+
+.signature-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 8px;
+    font-weight: bold;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.signature-user {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.no-signatures-compact {
+    text-align: center;
+    padding: 20px;
+    color: #6c8789;
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.no-signatures-compact i {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: #e1e5e9;
+}
+
+.no-signatures-compact p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Status Bar */
+.status-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 18px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #e1e5e9;
+    font-size: 14px;
+    color: var(--gray);
+    background: linear-gradient(to right, #f8f9fa, #ffffff);
+}
+
+#connectionStatus {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+#connectionStatus i {
+    animation: pulse 2s infinite;
+}
+
+/* Layout responsivo */
+@media (min-width: 1024px) {
+    .document-area {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .document-viewer {
+        flex: 2;
+        min-width: 60%;
+    }
+    
+    .signature-panel {
+        flex: 1;
+        min-width: 300px;
+        max-height: 500px;
+    }
+    
+    .signatures-container {
+        flex-basis: 100%;
+        margin-top: 0;
+    }
+}
+
+@media (max-width: 1024px) {
+    .document-area {
+        flex-direction: column;
+    }
+    
+    .signature-panel {
+        width: 100%;
+        margin-top: 20px;
+        max-height: none;
+    }
+    
+    .signatures-container {
+        margin-top: 20px;
+    }
+}
+
+/* Files Container */
+.files-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.files-header {
+    padding: 18px 25px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.files-content {
+    flex: 1;
+    padding: 25px;
+}
+
+.upload-area {
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 30px;
+    background: #fafafa;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.upload-area:hover {
+    border-color: var(--primary);
+    background: #f0f7f0;
+}
+
+.upload-icon {
+    font-size: 48px;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.upload-text {
+    margin-bottom: 20px;
+    color: var(--gray);
+}
+
+.file-input {
+    display: none;
+}
+
+.file-preview-container {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #96c77a;
+}
+
+.file-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.file-preview-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s;
+}
+
+.file-preview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.pdf-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.document-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.file-preview-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    word-break: break-word;
+    font-size: 14px;
+}
+
+.file-preview-size {
+    font-size: 12px;
+    color: #6c8789;
+    margin-bottom: 10px;
+}
+
+.file-preview-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.file-preview-btn {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    color: #6c8789;
+    transition: color 0.3s;
+    border-radius: 4px;
+}
+
+.file-preview-btn:hover {
+    color: #2f6c46;
+    background: rgba(47, 108, 70, 0.1);
+}
+
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.file-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    border: 1px solid #e1e5e9;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.file-icon {
+    font-size: 36px;
+    color: var(--primary);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.file-name {
+    font-weight: 600;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 16px;
+}
+
+.file-info {
+    color: var(--gray);
+    font-size: 14px;
+    margin-bottom: 15px;
+    flex: 1;
+}
+
+.file-info div {
+    margin-bottom: 4px;
+}
+
+.file-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.file-action-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    flex: 1;
+    justify-content: center;
+}
+
+.file-action-btn:hover {
+    background: rgba(47, 108, 70, 0.1);
+    transform: translateY(-1px);
+}
+
+.file-action-btn i {
+    margin-right: 5px;
+}
+
+.no-files {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c8789;
+    grid-column: 1 / -1;
+}
+
+.no-files-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    color: #e1e5e9;
+}
+
+/* Comments Section */
+.comments-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.comments-section h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+}
+
+.comments-section h3 i {
+    margin-right: 8px;
+}
+
+.comment {
+    padding: 15px;
+    border-bottom: 1px solid #e1e5e9;
+    transition: all 0.3s;
+}
+
+.comment:hover {
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.comment:last-child {
+    border-bottom: none;
+}
+
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.comment-user {
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.comment-time {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.comment-input {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.comment-input-field {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    outline: none;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.comment-input-field:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(47, 108, 70, 0.1);
+}
+
+/* Activity Feed */
+.activity-feed {
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+}
+
+.activity-feed h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+}
+
+.activity-feed h3 i {
+    margin-right: 8px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f3f5;
+    transition: all 0.3s;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: var(--gray);
+    margin-top: 4px;
+}
+
+/* Collaborators Container */
+.collaborators-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.collaborators-header {
+    padding: 18px 25px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.collaborators-content {
+    flex: 1;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.collaborator-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2f6c46;
+    transition: all 0.3s;
+}
+
+.collaborator-item:hover {
+    background: #f0f7f0;
+    transform: translateX(5px);
+}
+
+.collaborator-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #599d5e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.collaborator-details {
+    flex: 1;
+}
+
+.collaborator-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--dark);
+}
+
+.collaborator-email {
+    color: #6c8789;
+    font-size: 14px;
+}
+
+.collaborator-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Settings Container */
+.settings-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.settings-header {
+    padding: 18px 25px;
+    background: var(--primary);
+    color: white;
+}
+
+.settings-content {
+    flex: 1;
+    padding: 25px;
+}
+
+.settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.settings-section h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+}
+
+.settings-section h3 i {
+    margin-right: 10px;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: all 0.3s;
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.checkbox-group:hover {
+    background: #f8f9fa;
+}
+
+.checkbox {
+    margin-right: 10px;
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.checkbox-group label {
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--dark);
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    z-index: 1000;
+    transform: translateX(150%);
+    transition: transform 0.3s ease;
+    border-left: 4px solid var(--success);
+    max-width: 400px;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.notification i {
+    margin-right: 10px;
+    font-size: 20px;
+    color: var(--success);
+}
+
+.notification.error {
+    border-left-color: var(--danger);
+}
+
+.notification.error i {
+    color: var(--danger);
+}
+
+.notification.warning {
+    border-left-color: var(--warning);
+}
+
+.notification.warning i {
+    color: var(--warning);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal.show {
+    display: flex;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: modalAppear 0.3s ease;
+}
+
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modal-header {
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #2f6c46 0%, #478252 100%);
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.modal-footer {
+    padding: 15px 25px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Permission Badges */
+.permission-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.permission-owner {
+    background: var(--primary);
+    color: white;
+}
+
+.permission-editor {
+    background: var(--success);
+    color: white;
+}
+
+.permission-viewer {
+    background: var(--gray);
+    color: white;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejorar el scroll para el contenedor del documento */
+.document-container::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+}
+
+.document-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+    margin: 4px;
+}
+
+.document-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 8px;
+    border: 3px solid #f1f1f1;
+    transition: background 0.3s ease;
+}
+
+.document-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.document-container::-webkit-scrollbar-corner {
+    background: #f1f1f1;
+}
+
+/* Efectos de hover para el contenedor del documento */
+.document-container:hover {
+    box-shadow: 
+        0 8px 25px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* Ajustes para pantallas muy grandes */
+@media (min-width: 1600px) {
+    .viewer-content {
+        min-height: 1000px;
+        padding: 60px;
+    }
+    
+    .document-container {
+        max-width: 90%;
+        max-height: 90vh;
+    }
+    
+    .document-area {
+        min-height: 1100px;
+    }
+}
+
+/* Ajustes para tablets */
+@media (max-width: 1024px) {
+    .viewer-content {
+        min-height: 700px;
+        padding: 30px;
+    }
+    
+    .document-container {
+        max-height: 80vh;
+    }
+    
+    .document-area {
+        min-height: 800px;
+        gap: 20px;
+    }
+    
+    .document-viewer {
+        min-height: 700px;
+    }
+}
+
+/* Ajustes para móviles */
+@media (max-width: 768px) {
+    .viewer-content {
+        min-height: 600px;
+        padding: 20px;
+    }
+    
+    .document-container {
+        max-height: 75vh;
+        max-width: 100%;
+        border-radius: 8px;
+    }
+    
+    .document-area {
+        min-height: 700px;
+        gap: 15px;
+    }
+    
+    .document-viewer {
+        min-height: 600px;
+        border-radius: 12px;
+    }
+    
+    .viewer-header {
+        padding: 20px;
+        gap: 15px;
+    }
+    
+    .document-info {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .document-selector {
+        min-width: 100%;
+        font-size: 14px;
+    }
+}
+
+/* Animación de carga para el documento */
+@keyframes documentLoad {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.document-container[style*="display: block"] {
+    animation: documentLoad 0.5s ease-out;
+}
+
+/* Estados de interacción para el documento */
+.document-container.zooming {
+    transition: transform 0.3s ease;
+}
+
+.document-container.panning {
+    cursor: grab;
+}
+
+.document-container.panning:active {
+    cursor: grabbing;
+}
+
+/* Ajustes para dispositivos móviles */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .app-container {
+        flex-direction: column;
+        border-radius: 10px;
+    }
+    
+    .sidebar {
+        width: 100%;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .document-actions {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+    
+    .page {
+        padding: 20px;
+    }
+    
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .header h2 {
+        margin-bottom: 0;
+    }
+    
+    .viewer-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .viewer-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .document-container {
+        max-height: 70vh;
+        margin: 10px;
+    }
+    
+    .viewer-content {
+        min-height: 500px;
+        padding: 15px;
+    }
+    
+    .document-area {
+        min-height: 600px;
+        gap: 15px;
+    }
+    
+    .file-previews {
+        grid-template-columns: 1fr;
+    }
+    
+    .files-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .collaborator-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .collaborator-avatar {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .collaborator-actions {
+        margin-top: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .collaborator-actions .btn {
+        width: auto;
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 20px;
+    }
+    
+    .header h2 {
+        font-size: 1.5em;
+    }
+    
+    input, select, textarea {
+        font-size: 16px;
+        padding: 10px 12px;
+    }
+    
+    .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    .upload-area {
+        padding: 20px;
+    }
+    
+    .document-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+    }
+    
+    .document-selector {
+        min-width: 150px;
+        width: 100%;
+    }
+    
+    .viewer-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .zoom-controls {
+        margin-right: 0;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-footer {
+        flex-direction: column;
+    }
+    
+    .modal-footer .btn {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+}
+
+/* Utility Classes */
+.text-center {
+    text-align: center;
+}
+
+.text-left {
+    text-align: left;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-10 {
+    margin-top: 10px;
+}
+
+.mb-10 {
+    margin-bottom: 10px;
+}
+
+.ml-10 {
+    margin-left: 10px;
+}
+
+.mr-10 {
+    margin-right: 10px;
+}
+
+.p-10 {
+    padding: 10px;
+}
+
+.p-20 {
+    padding: 20px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.flex {
+    display: flex;
+}
+
+.flex-column {
+    flex-direction: column;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-around {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.h-100 {
+    height: 100%;
+}
+
+/* Loading States */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Print Styles */
+@media print {
+    .sidebar,
+    .header,
+    .signature-panel,
+    .signatures-container,
+    .comments-section,
+    .activity-feed,
+    .notification {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin: 0;
+        padding: 0;
+    }
+    
+    .page {
+        padding: 0;
+    }
+    
+    .document-area {
+        display: block;
+    }
+    
+    .document-viewer {
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    .document-container {
+        margin: 0;
+        box-shadow: none;
+    }
+}
+
+/* Active Signature Mode */
+.signature-mode-active {
+    cursor: crosshair;
+}
+
+.signature-mode-active .document-container {
+    cursor: crosshair;
+}
+
+.signature-mode-active .viewer-content {
+    cursor: crosshair;
+}
+
+/* Signature on Document */
+.document-signature {
+    position: absolute;
+    border: 2px dashed var(--primary);
+    background: rgba(47, 108, 70, 0.1);
+    cursor: move;
+    z-index: 10;
+    pointer-events: all;
+    transition: all 0.3s;
+    min-width: 100px;
+    min-height: 50px;
+}
+
+.document-signature img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    background: transparent !important;
+}
+
+.document-signature.selected {
+    border: 2px solid var(--accent);
+    background: rgba(89, 157, 94, 0.2);
+    box-shadow: 0 2px 10px rgba(89, 157, 94, 0.3);
+}
+
+.signature-handle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: var(--accent);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.handle-top-left { top: -6px; left: -6px; }
+.handle-top-right { top: -6px; right: -6px; }
+.handle-bottom-left { bottom: -6px; left: -6px; }
+.handle-bottom-right { bottom: -6px; right: -6px; }
+
+/* Modal de previsualización */
+.preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 3000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.preview-modal.show {
+    display: flex;
+}
+
+.preview-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.preview-modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--danger);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.preview-image {
+    max-width: 100%;
+    max-height: 80vh;
+    display: block;
+    margin: 0 auto;
+}
+
+.preview-pdf {
+    width: 100%;
+    height: 80vh;
+    border: none;
+}
+
+/* Estilos mejorados para diferentes tipos de archivo */
+.file-extension {
+    font-size: 12px;
+    color: #6c8789;
+    margin-top: 5px;
+    font-weight: normal;
+}
+
+/* Colores específicos para cada tipo de archivo */
+.document-preview.word-preview {
+    border-left-color: #2b579a;
+    background: #e8f4f8;
+}
+
+.document-preview.excel-preview {
+    border-left-color: #217346;
+    background: #f0f8f0;
+}
+
+.document-preview.powerpoint-preview {
+    border-left-color: #d24726;
+    background: #fdf0e8;
+}
+
+.document-preview.pdf-preview {
+    border-left-color: #e74c3c;
+    background: #f8e8e8;
+}
+
+.document-preview.text-preview {
+    border-left-color: #6c8789;
+    background: #f8f8f8;
+}
+
+.document-preview.archive-preview {
+    border-left-color: #f39c12;
+    background: #fff8e8;
+}
+
+.document-preview.generic-preview {
+    border-left-color: #2f6c46;
+    background: #f0f0f0;
+}
+
+/* Mejoras para las tarjetas de archivo */
+.file-card .file-icon i {
+    transition: transform 0.3s ease;
+}
+
+.file-card:hover .file-icon i {
+    transform: scale(1.1);
+}
+
+/* Estilos para la información de archivos en el grid */
+.file-info div:last-child {
+    font-weight: 600;
+    color: #2f6c46;
+    margin-top: 5px;
+    padding-top: 5px;
+    border-top: 1px solid #e1e5e9;
+}
+
+/* Ajustes para el documento version */
+#documentVersion {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* Mejorar la visualización del contenido de previsualización */
+#previewContent {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+/* Ajustes para el preview actions */
+.preview-actions {
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid #e1e5e9;
+    background: #f8f9fa;
+}
+
+/* Corrección para el botón de cerrar en modal de previsualización */
+.preview-modal-close:hover {
+    background: #c0392b;
+    transform: scale(1.1);
+}
+
+/* Asegurar que los botones de previsualización sean visibles */
+#previewDocumentBtn, #downloadPreviewBtn, #closePreviewBtn {
+    margin: 5px;
+}
+
+/* Mejorar la visualización de archivos en la página de archivos */
+.files-content {
+    position: relative;
+}
+
+/* Asegurar que el área de upload sea visible */
+.upload-area .btn {
+    margin-top: 10px;
+}
+
+/* Corrección para el contenedor de previsualización de archivos */
+.file-preview-container h3 {
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+/* Estilos mejorados para la lista de usuarios conectados */
+.user-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.user-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.user-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    margin-right: 12px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.user-status.away {
+    background: var(--warning);
+}
+
+.user-status.offline {
+    background: var(--gray);
+}
+
+.user-status::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.4;
+    top: -2px;
+    left: -2px;
+    animation: pulse 2s infinite;
+}
+
+/* Eliminar la animación de pulso para usuarios inactivos */
+.user-status.away::after,
+.user-status.offline::after {
+    animation: none;
+}
+
+/* Estilo para el mensaje de "solo tú" */
+.user-item:only-child {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Responsive para la lista de usuarios */
+@media (max-width: 768px) {
+    .online-users {
+        margin-top: 20px;
+    }
+    
+    .user-item {
+        padding: 6px 8px;
+    }
+}
+
+/* SISTEMA DE ZOOM MEJORADO */
+.document-container {
+    position: relative;
+    transition: none;
+}
+
+#documentCanvas {
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    image-rendering: pixelated;
+    max-width: none !important;
+    max-height: none !important;
+}
+
+.signature-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.document-signature {
+    position: absolute;
+    border: 2px dashed var(--primary);
+    background: rgba(47, 108, 70, 0.1);
+    cursor: move;
+    z-index: 10;
+    pointer-events: all;
+    transition: none;
+    box-sizing: border-box;
+}
+
+.document-signature img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+    background: transparent !important;
+}
+
+/* Mejorar el área del visor para scroll suave */
+.viewer-content {
+    overflow: auto;
+    scroll-behavior: smooth;
+    background: #f8f9fa;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    padding: 20px;
+}
+
+/* Controles de zoom más intuitivos */
+.zoom-controls {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    backdrop-filter: blur(10px);
+}
+
+.zoom-controls .btn {
+    background: rgba(255, 255, 255, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    color: white;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.zoom-controls .btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.zoom-level {
+    font-weight: 600;
+    min-width: 50px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin: 0 8px;
+}
+
+/* Indicador de documento firmado */
+.signed-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--success);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.file-status-signed {
+    color: var(--success);
+    font-weight: 600;
+    font-size: 12px;
+}
+
+/* Asegurar que el canvas de firma tenga fondo transparente */
+canvas {
+    background: transparent !important;
+}
+
+/* Mejorar el tamaño de la previsualización de firma automática */
+.auto-signature-preview {
+    min-height: 130px !important; /* Aumentado de 120px a 130px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background: white !important;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+}
+
+.auto-signature-preview img {
+    max-width: 100% !important;
+    max-height: 110px !important; /* Aumentado de 100px a 110px */
+    border-radius: 4px;
+    background: white !important;
+}
+
+/* Aumentar el tamaño de las firmas en el documento */
+.document-signature {
+    min-width: 130px !important; /* Aumentado de 120px a 130px */
+    min-height: 70px !important; /* Aumentado de 60px a 70px */
+}
+
+.signature-img {
+    max-height: 110px !important; /* Aumentado de 100px a 110px */
+}
+
+/* Mejorar la información de la firma automática */
+.signature-info-auto {
+    font-size: 13px !important; /* Un poco más grande */
+}
+
+.signature-info-auto ul {
+    font-size: 12px !important; /* Un poco más grande */
+}

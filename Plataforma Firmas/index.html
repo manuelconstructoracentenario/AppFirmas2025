@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cente Docs - Plataforma de Colaboración Profesional</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-card">
+            <div class="login-logo">
+                <img src="https://constructoracentenario.com/wp-content/uploads/2024/04/LogoConstructoraCen2024.png" alt="Cente Docs" class="logo-image">
+            </div>
+            <h2>Bienvenido a Cente Docs</h2>
+            <p>Inicia sesión para colaborar en documentos</p>
+            
+            <form class="login-form" id="loginForm">
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="email" placeholder="tu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fas fa-sign-in-alt btn-icon"></i>
+                    Iniciar Sesión
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div class="app-container" id="appContainer">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <img src="https://constructoracentenario.com/wp-content/uploads/2024/04/LogoConstructoraCen2024.png" alt="Cente Docs" class="logo-image-small">
+                </div>
+                <h1>Cente Docs</h1>
+            </div>
+            
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">JD</div>
+                <div>
+                    <div class="user-name" id="currentUserName">Juan Díaz</div>
+                    <div class="user-role-badge" id="userRoleBadge">Propietario</div>
+                </div>
+            </div>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a class="nav-link active" data-page="documents">
+                        <span class="nav-icon"><i class="fas fa-file-alt"></i></span>
+                        <span>Documentos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-page="files">
+                        <span class="nav-icon"><i class="fas fa-folder"></i></span>
+                        <span>Archivos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-page="collaborators">
+                        <span class="nav-icon"><i class="fas fa-users"></i></span>
+                        <span>Colaboradores</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-page="settings">
+                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                        <span>Configuración</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="logoutBtn">
+                        <span class="nav-icon"><i class="fas fa-sign-out-alt"></i></span>
+                        <span>Cerrar Sesión</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="online-users">
+                <h3><i class="fas fa-circle"></i> Usuarios Conectados</h3>
+                <ul class="user-list" id="usersList">
+                    <!-- Los usuarios se cargarán dinámicamente -->
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Documents Page -->
+            <div class="page active" id="documents-page">
+                <div class="header">
+                    <h2><i class="fas fa-file-alt"></i> Documentos para Firmar</h2>
+                    <div class="document-actions">
+                        <button class="btn btn-primary" id="uploadDocumentBtn">
+                            <span class="btn-icon"><i class="fas fa-upload"></i></span>
+                            Subir Documento
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="document-area">
+                    <!-- Visor de Documentos -->
+                    <div class="document-viewer">
+                        <div class="viewer-header">
+                            <div class="document-info">
+                                <select class="document-selector" id="documentSelector">
+                                    <option value="">Seleccionar documento...</option>
+                                    <!-- Los documentos se cargarán dinámicamente -->
+                                </select>
+                                <div id="documentVersion">v1.0</div>
+                            </div>
+                            <div class="viewer-actions">
+                                <div class="zoom-controls">
+                                    <button class="btn btn-outline" id="zoomOutBtn">
+                                        <i class="fas fa-search-minus"></i>
+                                    </button>
+                                    <span class="zoom-level" id="zoomLevel">100%</span>
+                                    <button class="btn btn-outline" id="zoomInBtn">
+                                        <i class="fas fa-search-plus"></i>
+                                    </button>
+                                </div>
+                                <button class="btn btn-primary" id="addSignatureBtn">
+                                    <i class="fas fa-signature"></i> Agregar Firma
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-content" id="viewerContent">
+                            <div class="no-document" id="noDocument">
+                                <div class="no-document-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                                <h3>No hay documento seleccionado</h3>
+                                <p>Selecciona un documento de la lista para comenzar</p>
+                            </div>
+                            
+                            <!-- Aquí se mostrará el documento -->
+                            <div class="document-container" id="documentContainer" style="display: none;">
+                                <canvas id="documentCanvas"></canvas>
+                                
+                                <!-- Capa para firmas -->
+                                <div class="signature-layer" id="signatureLayer"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="status-bar">
+                            <div id="connectionStatus"><i class="fas fa-circle" style="color: #96c77a;"></i> Conectado: <span id="connectedUsers">3 usuarios</span></div>
+                            <div id="lastUpdate">Última actualización: <span id="updateTime">Nunca</span></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Panel de Firma Compacto -->
+                    <div class="signature-panel">
+                        <div class="panel-header">
+                            <i class="fas fa-signature"></i> Firma Digital
+                        </div>
+                        <div class="signature-area">
+                            <div class="signature-tabs">
+                                <button class="signature-tab active" data-tab="auto">Firma Automática</button>
+                                <button class="signature-tab" data-tab="upload">Cargar Firma</button>
+                            </div>
+                            
+                            <!-- Pestaña para firma automática -->
+                            <div class="signature-tab-content active" id="auto-tab">
+                                <p class="signature-instructions">Tu firma digital se genera automáticamente con tu información.</p>
+                                
+                                <div class="auto-signature-area">
+                                    <div class="auto-signature-preview" id="autoSignaturePreview">
+                                        <!-- La vista previa se cargará aquí -->
+                                    </div>
+                                    
+                                    <div class="signature-info-auto">
+                                        <p><strong>Información incluida automáticamente:</strong></p>
+                                        <ul>
+                                            <li>Nombre completo en tamaño grande</li>
+                                            <li>Organización: Constructora Centenario</li>
+                                            <li>Certificado digital (DN/CN)</li>
+                                            <li>Correo electrónico</li>
+                                            <li>Fecha y hora actual con timezone</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="signature-actions">
+                                    <button class="btn btn-success" id="useAutoSignature">
+                                        <span class="btn-icon"><i class="fas fa-signature"></i></span>
+                                        Usar Firma Automática
+                                    </button>
+                                    <button class="btn btn-outline" id="refreshAutoSignature">
+                                        <span class="btn-icon"><i class="fas fa-sync-alt"></i></span>
+                                        Actualizar Firma
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Pestaña para cargar firma digital -->
+                            <div class="signature-tab-content" id="upload-tab">
+                                <p class="signature-instructions">Carga tu firma digital en formato PNG, JPG, SVG.</p>
+                                
+                                <div class="upload-signature-area" id="uploadSignatureArea">
+                                    <div class="upload-signature-icon">
+                                        <i class="fas fa-file-upload"></i>
+                                    </div>
+                                    <h3 class="upload-signature-text">Haz clic para cargar tu firma digital</h3>
+                                    <p>Formatos soportados: PNG, JPG, SVG</p>
+                                    <input type="file" id="signatureFileInput" class="signature-file-input" accept=".png,.jpg,.jpeg,.svg">
+                                </div>
+                                
+                                <div class="signature-actions">
+                                    <button class="btn btn-outline" id="clearUploadSignature">
+                                        <span class="btn-icon"><i class="fas fa-eraser"></i></span>
+                                        Limpiar
+                                    </button>
+                                    <button class="btn btn-success" id="saveUploadSignature">
+                                        <span class="btn-icon"><i class="fas fa-check"></i></span>
+                                        Guardar Firma
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="signature-preview">
+                                <div class="preview-title"><i class="fas fa-eye"></i> Vista previa de firma</div>
+                                <img id="signaturePreview" class="signature-img" alt="Firma guardada">
+                                <div id="noSignature" class="no-signature">Aún no has guardado una firma</div>
+                                <div class="signature-info" id="signatureInfo"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firmas en la parte inferior -->
+                    <div class="signatures-container">
+                        <div class="signatures-header">
+                            <h3><i class="fas fa-pen-fancy"></i> Firmas en el Documento</h3>
+                            <div class="signature-actions-sidebar">
+                                <button class="btn btn-outline btn-sm" id="previewDocumentBtn">
+                                    <i class="fas fa-eye"></i> Previsualizar
+                                </button>
+                                <button class="btn btn-outline btn-sm" id="clearAllSignatures">
+                                    <i class="fas fa-trash"></i> Limpiar
+                                </button>
+                                <button class="btn btn-primary btn-sm" id="saveDocumentWithSignatures">
+                                    <i class="fas fa-save"></i> Guardar
+                                </button>
+                            </div>
+                        </div>
+                        <div class="signatures-grid" id="signaturesGrid">
+                            <div class="no-signatures-compact" id="noSignatures">
+                                <i class="fas fa-signature"></i>
+                                <p>No hay firmas en este documento</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Comentarios y Actividad -->
+                <div class="comments-section">
+                    <h3>Comentarios sobre el Documento</h3>
+                    <div class="comment-input">
+                        <input type="text" class="comment-input-field" placeholder="Agregar un comentario..." id="commentInput">
+                        <button class="btn btn-primary" id="addCommentBtn">Comentar</button>
+                    </div>
+                </div>
+                
+                <div class="activity-feed">
+                    <h3>Actividad Reciente</h3>
+                    <!-- La actividad se cargará dinámicamente -->
+                </div>
+            </div>
+            
+            <!-- Files Page -->
+            <div class="page" id="files-page">
+                <div class="header">
+                    <h2><i class="fas fa-folder"></i> Gestión de Archivos</h2>
+                    <div class="document-actions">
+                        <button class="btn btn-primary" id="uploadFileBtn">
+                            <span class="btn-icon"><i class="fas fa-upload"></i></span>
+                            Subir Archivo
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="files-container">
+                    <div class="files-header">
+                        <div>Archivos Compartidos</div>
+                        <div id="filesCount">0 archivos</div>
+                    </div>
+                    
+                    <div class="files-content">
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <h3 class="upload-text">Arrastra archivos aquí o haz clic para subir</h3>
+                            <button class="btn btn-outline">Seleccionar Archivos</button>
+                            <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
+                        </div>
+                        
+                        <div class="file-preview-container" id="filePreviewContainer" style="display: none;">
+                            <h3>Vista Previa de Archivos</h3>
+                            <div class="file-previews" id="filePreviews">
+                                <!-- Las vistas previas se insertarán aquí -->
+                            </div>
+                        </div>
+                        
+                        <div class="files-grid" id="filesGrid">
+                            <div class="no-files" id="noFiles">
+                                <div class="no-files-icon">
+                                    <i class="fas fa-folder-open"></i>
+                                </div>
+                                <h3>No hay archivos</h3>
+                                <p>Sube tu primer archivo para comenzar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Collaborators Page -->
+            <div class="page" id="collaborators-page">
+                <div class="header">
+                    <h2><i class="fas fa-users"></i> Gestión de Colaboradores</h2>
+                    <div class="document-actions">
+                        <button class="btn btn-primary" id="addCollaboratorBtn">
+                            <span class="btn-icon"><i class="fas fa-user-plus"></i></span>
+                            Agregar Colaborador
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="collaborators-container">
+                    <div class="collaborators-header">
+                        <div>Lista de Colaboradores</div>
+                        <div id="collaboratorsCount">1 miembro</div>
+                    </div>
+                    
+                    <div class="collaborators-content" id="collaboratorsList">
+                        <!-- Los colaboradores se cargarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Page -->
+            <div class="page" id="settings-page">
+                <div class="header">
+                    <h2><i class="fas fa-cog"></i> Configuración</h2>
+                </div>
+                
+                <div class="settings-container">
+                    <div class="settings-header">
+                        Preferencias de la Cuenta
+                    </div>
+                    
+                    <div class="settings-content">
+                        <div class="settings-section">
+                            <h3><i class="fas fa-user"></i> Información Personal</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Nombre Completo</label>
+                                <input type="text" class="form-control" id="userFullName" value="Juan Díaz">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Correo Electrónico</label>
+                                <input type="email" class="form-control" id="userEmail" value="admin@centedocs.com">
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3><i class="fas fa-signature"></i> Firma Digital</h3>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Firma Predeterminada</label>
+                                <select class="form-control" id="defaultSignature">
+                                    <option value="auto">Firma Automática</option>
+                                    <option value="upload">Firma Cargada</option>
+                                </select>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" class="checkbox" id="autoInsert" checked>
+                                <label for="autoInsert">Mostrar fecha y hora en la firma</label>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" class="checkbox" id="timestamp" checked>
+                                <label for="timestamp">Incluir sello de tiempo en el documento</label>
+                            </div>
+                        </div>
+                        
+                        <div class="settings-section">
+                            <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" class="checkbox" id="notifEmail" checked>
+                                <label for="notifEmail">Notificaciones por correo electrónico</label>
+                            </div>
+                            
+                            <div class="checkbox-group">
+                                <input type="checkbox" class="checkbox" id="notifApp" checked>
+                                <label for="notifApp">Notificaciones en la aplicación</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificación -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <div id="notificationText">Operación completada con éxito</div>
+    </div>
+
+    <!-- Modal para agregar colaborador -->
+    <div class="modal" id="addCollaboratorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Agregar Colaborador</h3>
+                <button class="modal-close" id="closeCollaboratorModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico</label>
+                    <input type="email" class="form-control" id="collaboratorEmail" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rol</label>
+                    <select class="form-control" id="collaboratorRole">
+                        <option value="editor">Editor</option>
+                        <option value="viewer">Lector</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelCollaboratorBtn">Cancelar</button>
+                <button class="btn btn-primary" id="confirmCollaboratorBtn">Enviar Invitación</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Previsualización -->
+    <div class="preview-modal" id="previewModal">
+        <div class="preview-modal-content">
+            <button class="preview-modal-close" id="closePreviewModal">&times;</button>
+            <div id="previewContent">
+                <!-- El contenido de previsualización se cargará aquí -->
+            </div>
+            <div class="preview-actions" style="padding: 20px; text-align: center; border-top: 1px solid #e1e5e9;">
+                <button class="btn btn-primary" id="downloadPreviewBtn">
+                    <i class="fas fa-download"></i> Descargar Documento
+                </button>
+                <button class="btn btn-outline" id="closePreviewBtn">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agregar las dependencias necesarias -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script>
+        // Configurar PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
