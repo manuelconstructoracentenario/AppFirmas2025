@@ -76,7 +76,7 @@ class LocalStorageService {
             timestamp: new Date()
         });
         
-        // Mantener solo las últimas 50 actividades
+        // MANTENER SOLO LAS ÚLTIMAS 50 ACTIVIDADES
         if (activities.length > 50) {
             activities.splice(50);
         }
@@ -85,7 +85,7 @@ class LocalStorageService {
         return activity;
     }
 
-    async getRecentActivities(limit = 10) {
+    async getRecentActivities(limit = 5) { // CAMBIADO: Máximo 5 actividades
         const activities = this.getFromStorage('activities') || [];
         return activities.slice(0, limit);
     }
@@ -138,7 +138,7 @@ class AuthService {
                 uid: 'user_' + Date.now(),
                 email: email,
                 name: name,
-                role: 'user',
+                role: 'owner',
                 avatar: name.substring(0, 2).toUpperCase(),
                 password: password,
                 createdAt: new Date(),
@@ -221,41 +221,6 @@ class AuthService {
     }
 }
 
-// Sistema de REGISTRO
-const registerBtn = document.getElementById('registerBtn');
-if (registerBtn) {
-    registerBtn.addEventListener('click', async function() {
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        if (!email || !password) {
-            showNotification('Por favor, completa todos los campos', 'error');
-            return;
-        }
-        
-        const name = prompt('Por favor, ingresa tu nombre completo:');
-        if (!name) {
-            showNotification('El nombre es requerido', 'error');
-            return;
-        }
-        
-        try {
-            const result = await AuthService.registerUser(email, password, name);
-            
-            if (result.success) {
-                showNotification(`¡Cuenta creada exitosamente! Bienvenido ${name}`);
-                // Limpiar formulario
-                document.getElementById('email').value = '';
-                document.getElementById('password').value = '';
-            } else {
-                showNotification(result.error, 'error');
-            }
-        } catch (error) {
-            showNotification('Error en el registro', 'error');
-        }
-    });
-}
-
 // Sistema de Gestión de Archivos
 class FileService {
     static files = [];
@@ -296,6 +261,9 @@ class FileService {
                 showNotification(`Error al subir ${file.name}`, 'error');
             }
         }
+        
+        // ACTUALIZAR: Refrescar el selector de documentos
+        DocumentService.refreshDocumentSelector();
         
         return uploadedFiles;
     }
@@ -400,6 +368,9 @@ class FileService {
                     <button class="file-preview-btn" onclick="FileService.downloadFile('${file.id}')" title="Descargar">
                         <i class="fas fa-download"></i>
                     </button>
+                    <button class="file-preview-btn" onclick="FileService.editOrSignFile('${file.id}')" title="Editar/Firmar">
+                        <i class="fas fa-edit"></i>
+                    </button>
                     <button class="file-preview-btn" onclick="FileService.removeFile('${file.id}')" title="Eliminar">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -471,6 +442,9 @@ class FileService {
                     <button class="file-action-btn" onclick="FileService.downloadFile('${file.id}')">
                         <i class="fas fa-download"></i> Descargar
                     </button>
+                    <button class="file-action-btn highlight" onclick="FileService.editOrSignFile('${file.id}')">
+                        <i class="fas fa-edit"></i> Editar/Firmar
+                    </button>
                     <button class="file-action-btn" onclick="FileService.shareFile('${file.id}')">
                         <i class="fas fa-share"></i> Compartir
                     </button>
@@ -478,6 +452,22 @@ class FileService {
             `;
             filesGrid.appendChild(fileCard);
         });
+    }
+
+    // NUEVO MÉTODO: Editar o firmar archivo
+    static async editOrSignFile(fileId) {
+        const file = this.files.find(f => f.id === fileId);
+        if (file) {
+            // Cambiar a la página de documentos
+            switchPage('documents');
+            
+            // Esperar un momento para que la página se cargue
+            setTimeout(async () => {
+                // Cargar el documento en el visor
+                await DocumentService.loadDocument(file);
+                showNotification(`Documento "${file.name}" cargado para edición/firma`);
+            }, 100);
+        }
     }
     
     static async downloadFile(fileId) {
@@ -579,6 +569,54 @@ class FileService {
             throw error;
         }
     }
+
+    // NUEVO MÉTODO: Filtrar archivos por búsqueda
+    static filterFiles(searchTerm) {
+        const fileCards = document.querySelectorAll('.file-card');
+        let visibleCount = 0;
+        
+        fileCards.forEach(card => {
+            const fileName = card.querySelector('.file-name').textContent.toLowerCase();
+            if (fileName.includes(searchTerm)) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        
+        // Actualizar contador
+        const filesCount = document.getElementById('filesCount');
+        if (filesCount) {
+            filesCount.textContent = `${visibleCount} archivo${visibleCount !== 1 ? 's' : ''}`;
+        }
+        
+        // Mostrar mensaje si no hay resultados
+        const noFiles = document.getElementById('noFiles');
+        const filesGrid = document.getElementById('filesGrid');
+        if (noFiles && filesGrid) {
+            if (visibleCount === 0 && searchTerm) {
+                if (!document.getElementById('noSearchResults')) {
+                    const noResults = document.createElement('div');
+                    noResults.id = 'noSearchResults';
+                    noResults.className = 'no-files';
+                    noResults.innerHTML = `
+                        <div class="no-files-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3>No se encontraron archivos</h3>
+                        <p>No hay archivos que coincidan con "${searchTerm}"</p>
+                    `;
+                    filesGrid.appendChild(noResults);
+                }
+            } else {
+                const noResults = document.getElementById('noSearchResults');
+                if (noResults) {
+                    noResults.remove();
+                }
+            }
+        }
+    }
 }
 
 // Sistema de Generación de Firmas Automáticas
@@ -588,8 +626,8 @@ class SignatureGenerator {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            const width = 600;
-            const height = 130;
+            const width = 500; // Reducido un poco el ancho
+            const height = 120; // Reducido un poco el alto
             canvas.width = width;
             canvas.height = height;
             
@@ -600,17 +638,20 @@ class SignatureGenerator {
             
             const leftWidth = 250;
             
-            ctx.font = 'bold 24px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+            // TIPO DE LETRA para el nombre izquierdo (más grande)
+            ctx.font = 'bold 22px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
             ctx.fillStyle = '#2f6c46';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             
-            let nameY = (height - (nameLines.length * 28)) / 2;
+            // Dibujar el nombre en la izquierda (centrado verticalmente)
+            let nameY = (height - (nameLines.length * 26)) / 2;
             nameLines.forEach(line => {
                 ctx.fillText(line, 15, nameY);
-                nameY += 28;
+                nameY += 26;
             });
             
+            // Línea separadora vertical
             ctx.strokeStyle = '#2f6c46';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -618,29 +659,32 @@ class SignatureGenerator {
             ctx.lineTo(leftWidth + 5, height - 15);
             ctx.stroke();
             
+            // TIPO DE LETRA para la información adicional (derecha)
             ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
             ctx.fillStyle = '#333333';
             ctx.textAlign = 'left';
             
+            // Obtener fecha formateada
             const now = new Date();
             const formattedDate = this.formatDate(now);
             
+            // INFORMACIÓN SIMPLIFICADA - Solo nombre y fecha
             const lines = [
                 `Firmado digitalmente por:`,
                 `${user.name}`,
-                `Organización: Constructora Centenario`,
-                `Email: ${user.email}`,
                 `Fecha: ${formattedDate}`
             ];
             
-            let y = 20;
+            // Dibujar cada línea en la parte derecha
+            let y = 25;
             const rightStartX = leftWidth + 15;
             
             lines.forEach(line => {
+                // Usar negrita para el primer elemento
                 if (line.startsWith('Firmado digitalmente')) {
                     ctx.font = 'bold 14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
                 } else if (line === user.name) {
-                    ctx.font = 'bold 15px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+                    ctx.font = 'bold 16px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
                     ctx.fillStyle = '#2f6c46';
                 } else {
                     ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
@@ -648,9 +692,10 @@ class SignatureGenerator {
                 }
                 
                 ctx.fillText(line, rightStartX, y);
-                y += 20;
+                y += 22;
             });
                         
+            // Convertir a data URL con fondo transparente
             const dataURL = canvas.toDataURL('image/png');
             resolve(dataURL);
         });
@@ -1546,7 +1591,7 @@ class DocumentService {
 
         selector.innerHTML = '<option value="">Seleccionar documento...</option>';
         
-        // Mostrar solo documentos no firmados en el selector
+        // Obtener documentos actualizados
         const unsignedFiles = FileService.files.filter(file => file.source === 'uploaded');
         
         const sortedFiles = [...unsignedFiles].sort((a, b) => 
@@ -1567,6 +1612,19 @@ class DocumentService {
                 selector.appendChild(option);
             }
         });
+        
+        // Si hay documentos pero ninguno seleccionado, seleccionar el primero
+        if (sortedFiles.length > 0 && (!this.currentDocument || selector.value === "")) {
+            selector.value = sortedFiles[0].id;
+            // Disparar el evento change para cargar el documento
+            const event = new Event('change');
+            selector.dispatchEvent(event);
+        }
+    }
+
+    // NUEVO MÉTODO: Refrescar selector
+    static refreshDocumentSelector() {
+        this.renderDocumentSelector();
     }
 
     static initializeDocumentInteractions() {
@@ -1592,6 +1650,41 @@ class DocumentService {
                     this.adjustContainerSize();
                 }, 100);
             }
+        }
+    }
+
+    // NUEVO MÉTODO: Cargar configuración del usuario
+    static loadUserSettings() {
+        if (!AppState.currentUser) return;
+        
+        // Actualizar campos con información real del usuario
+        const userFullName = document.getElementById('userFullName');
+        const userEmail = document.getElementById('userEmail');
+        
+        if (userFullName) userFullName.value = AppState.currentUser.name;
+        if (userEmail) userEmail.value = AppState.currentUser.email;
+        
+        // Agregar event listeners para guardar cambios
+        if (userFullName) {
+            userFullName.addEventListener('change', function() {
+                AppState.currentUser.name = this.value;
+                // Actualizar en almacenamiento
+                const storage = new LocalStorageService();
+                storage.getUser(AppState.currentUser.email).then(user => {
+                    if (user) {
+                        user.name = this.value;
+                        storage.saveUser(user);
+                    }
+                });
+                showNotification('Nombre actualizado correctamente');
+            });
+        }
+        
+        if (userEmail) {
+            userEmail.addEventListener('change', function() {
+                showNotification('El correo electrónico no se puede modificar', 'warning');
+                this.value = AppState.currentUser.email; // Revertir cambio
+            });
         }
     }
 }
@@ -1973,7 +2066,7 @@ class ActivityService {
     static async loadRecentActivities() {
         try {
             const storage = new LocalStorageService();
-            const activities = await storage.getRecentActivities(10);
+            const activities = await storage.getRecentActivities(5); // CAMBIADO: Máximo 5 actividades
             this.renderActivities(activities);
         } catch (error) {
             console.error('Error loading activities:', error);
@@ -1988,7 +2081,10 @@ class ActivityService {
         const activityItems = activityFeed.querySelectorAll('.activity-item');
         activityItems.forEach(item => item.remove());
         
-        activities.forEach(activity => {
+        // Mostrar máximo 5 actividades
+        const limitedActivities = activities.slice(0, 5);
+        
+        limitedActivities.forEach(activity => {
             const activityItem = document.createElement('div');
             activityItem.className = 'activity-item';
             
@@ -2026,25 +2122,31 @@ class ActivityService {
 
 // Sistema de Colaboración
 class CollaborationService {
+    static collaborators = [];
+
     static async updateOnlineUsers() {
         const usersList = document.getElementById('usersList');
         if (!usersList) return;
         
         usersList.innerHTML = '';
         
-        if (AppState.currentUser) {
+        // Cargar todos los usuarios registrados
+        const storage = new LocalStorageService();
+        const allUsers = await storage.getAllUsers();
+        
+        Object.values(allUsers).forEach(user => {
             const userItem = document.createElement('li');
             userItem.className = 'user-item';
             userItem.innerHTML = `
-                <div class="user-status"></div>
-                <div>${AppState.currentUser.name} 
-                    <span class="permission-badge permission-owner">
-                        Propietario
+                <div class="user-status ${user.email === AppState.currentUser.email ? 'online' : 'away'}"></div>
+                <div>${user.name} 
+                    <span class="permission-badge permission-${user.role}">
+                        ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
                     </span>
                 </div>
             `;
             usersList.appendChild(userItem);
-        }
+        });
         
         if (usersList.children.length === 0) {
             const emptyMessage = document.createElement('li');
@@ -2064,22 +2166,58 @@ class CollaborationService {
         
         if (!collaboratorsList || !collaboratorsCount) return;
         
-        collaboratorsCount.textContent = `1 miembro`;
-        collaboratorsList.innerHTML = '';
+        try {
+            const storage = new LocalStorageService();
+            const allUsers = await storage.getAllUsers();
+            const collaborators = Object.values(allUsers);
+            
+            collaboratorsCount.textContent = `${collaborators.length} miembro${collaborators.length !== 1 ? 's' : ''}`;
+            collaboratorsList.innerHTML = '';
+            
+            collaborators.forEach(user => {
+                const collaboratorItem = document.createElement('div');
+                collaboratorItem.className = 'collaborator-item';
+                collaboratorItem.innerHTML = `
+                    <div class="collaborator-avatar">${user.avatar}</div>
+                    <div class="collaborator-details">
+                        <div class="collaborator-name">${user.name}</div>
+                        <div class="collaborator-email">${user.email}</div>
+                        <div class="user-role-badge permission-${user.role}">
+                            ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
+                        </div>
+                    </div>
+                    <div class="collaborator-actions">
+                        ${user.email !== AppState.currentUser.email ? `
+                        <button class="btn btn-outline" onclick="CollaborationService.removeCollaborator('${user.email}')">
+                            Remover
+                        </button>
+                        ` : ''}
+                    </div>
+                `;
+                collaboratorsList.appendChild(collaboratorItem);
+            });
+            
+        } catch (error) {
+            console.error('Error loading collaborators:', error);
+        }
+    }
+    
+    static async removeCollaborator(email) {
+        if (email === AppState.currentUser.email) {
+            showNotification('No puedes removerte a ti mismo', 'error');
+            return;
+        }
         
-        const collaboratorItem = document.createElement('div');
-        collaboratorItem.className = 'collaborator-item';
-        collaboratorItem.innerHTML = `
-            <div class="collaborator-avatar">${AppState.currentUser.avatar}</div>
-            <div class="collaborator-details">
-                <div class="collaborator-name">${AppState.currentUser.name}</div>
-                <div class="collaborator-email">${AppState.currentUser.email}</div>
-                <div class="user-role-badge permission-owner">
-                    Propietario
-                </div>
-            </div>
-        `;
-        collaboratorsList.appendChild(collaboratorItem);
+        if (confirm(`¿Estás seguro de que quieres remover a este colaborador?`)) {
+            const storage = new LocalStorageService();
+            const users = await storage.getAllUsers();
+            delete users[email];
+            storage.saveToStorage('users', users);
+            
+            this.renderCollaborators();
+            this.updateOnlineUsers();
+            showNotification('Colaborador removido', 'warning');
+        }
     }
 }
 
@@ -2133,6 +2271,9 @@ function switchPage(pageId) {
         CollaborationService.renderCollaborators();
     } else if (pageId === 'documents') {
         ActivityService.loadRecentActivities();
+    } else if (pageId === 'settings') {
+        // ACTUALIZAR: Cargar información real del usuario en configuración
+        DocumentService.loadUserSettings();
     }
 }
 
@@ -2676,6 +2817,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     showNotification('Error al subir archivos', 'error');
                 }
             }
+        });
+    }
+    
+    // NUEVO: Barra de búsqueda en archivos
+    const fileSearchInput = document.getElementById('fileSearchInput');
+    if (fileSearchInput) {
+        fileSearchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            FileService.filterFiles(searchTerm);
         });
     }
     

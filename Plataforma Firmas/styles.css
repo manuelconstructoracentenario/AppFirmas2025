@@ -2635,3 +2635,457 @@ canvas {
 .login-card .btn {
     margin-bottom: 10px;
 }
+
+/* ===== ESTILOS NUEVOS Y MEJORAS ===== */
+
+/* Estilos para la barra de búsqueda */
+.search-container {
+    background: #f8f9fa;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 15px 12px 45px;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    outline: none;
+    transition: all 0.3s;
+    background: white;
+}
+
+.search-box input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(47, 108, 70, 0.1);
+}
+
+.search-box i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c8789;
+}
+
+/* Mejoras para botones de archivos */
+.file-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.file-action-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+    border: 1px solid #e1e5e9;
+}
+
+.file-action-btn:hover {
+    background: rgba(47, 108, 70, 0.1);
+    transform: translateY(-1px);
+    border-color: var(--primary);
+}
+
+/* Mejorar visualización de usuarios conectados */
+.user-status.online {
+    background: var(--success);
+}
+
+.user-status.away {
+    background: var(--warning);
+}
+
+.user-status.offline {
+    background: var(--gray);
+}
+
+/* Estilos para mensaje de búsqueda sin resultados */
+#noSearchResults {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c8789;
+}
+
+#noSearchResults .no-files-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #e1e5e9;
+}
+
+/* Mejoras responsive */
+@media (max-width: 768px) {
+    .file-actions {
+        flex-direction: column;
+    }
+    
+    .file-action-btn {
+        min-width: 100%;
+        margin-bottom: 5px;
+    }
+    
+    .search-box input {
+        font-size: 16px; /* Evitar zoom en iOS */
+    }
+    
+    .collaborator-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .collaborator-avatar {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .collaborator-actions {
+        margin-top: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .collaborator-actions .btn {
+        width: 100%;
+    }
+}
+
+/* Mejoras para actividades recientes */
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid #f1f3f5;
+    transition: all 0.3s;
+}
+
+.activity-item:hover {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 14px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-content div:first-child {
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.activity-time {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+/* Mejoras para la firma simplificada */
+.auto-signature-preview {
+    min-height: 130px !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background: white !important;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+}
+
+.auto-signature-preview img {
+    max-width: 100% !important;
+    max-height: 110px !important;
+    border-radius: 4px;
+    background: white !important;
+}
+
+/* Mejoras para el selector de documentos */
+.document-selector {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    padding: 12px 20px;
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 300px;
+    cursor: pointer;
+    flex: 1;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.document-selector:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.document-selector:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+/* Badges de permisos mejorados */
+.permission-owner {
+    background: var(--primary);
+    color: white;
+}
+
+.permission-editor {
+    background: var(--success);
+    color: white;
+}
+
+.permission-viewer {
+    background: var(--gray);
+    color: white;
+}
+
+.permission-user {
+    background: #6c8789;
+    color: white;
+}
+
+/* Mejoras para el panel de colaboradores */
+.collaborator-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2f6c46;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.collaborator-item:hover {
+    background: #f0f7f0;
+    transform: translateX(5px);
+}
+
+.collaborator-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #599d5e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+}
+
+.collaborator-details {
+    flex: 1;
+}
+
+.collaborator-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--dark);
+}
+
+.collaborator-email {
+    color: #6c8789;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.collaborator-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Mejoras para la configuración */
+.settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+.settings-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.form-control:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+/* Animaciones mejoradas */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.activity-item {
+    animation: fadeIn 0.3s ease;
+}
+
+.file-card {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Estados de carga mejorados */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbars mejorados para el visor de documentos */
+.viewer-content::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+}
+
+.viewer-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+.viewer-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 6px;
+    border: 2px solid #f1f1f1;
+}
+
+.viewer-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Mejoras para el modo firma activo */
+.signature-mode-active .document-container {
+    cursor: crosshair;
+}
+
+.signature-mode-active .viewer-content {
+    cursor: crosshair;
+}
+
+/* Estilos para el botón de editar/firmar destacado */
+.file-action-btn.highlight {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.file-action-btn.highlight:hover {
+    background: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(47, 108, 70, 0.3);
+}
+
+/* Mejoras para la información de firma automática */
+.signature-info-auto {
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 15px;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.signature-info-auto p {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2f6c46;
+}
+
+.signature-info-auto ul {
+    margin: 0;
+    padding-left: 15px;
+    color: #666;
+}
+
+.signature-info-auto li {
+    margin-bottom: 4px;
+}
+
+/* Mejoras para el selector de documentos en tiempo real */
+.document-selector option {
+    background: white;
+    color: var(--dark);
+    padding: 8px;
+    font-size: 14px;
+}
+
+/* Estados hover para elementos interactivos */
+.collaborator-item, .file-card, .activity-item, .user-item {
+    transition: all 0.3s ease;
+}
+
+.collaborator-item:hover, .file-card:hover, .activity-item:hover, .user-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mejoras de accesibilidad */
+.btn:focus, .form-control:focus, .file-action-btn:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* Estilos para el mensaje de "solo tú" en usuarios conectados */
+.user-item:only-child {
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+}
+
+.user-item:only-child div {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+}
