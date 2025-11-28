@@ -6,9 +6,7 @@
   to = "/index.html"
   status = 200
 
-[build.environment]
-  NODE_VERSION = "18"
-
+# Configuración adicional para SPAs
 [[headers]]
   for = "/*"
   [headers.values]
@@ -16,3 +14,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Configuración de build
+[build.environment]
+  NODE_VERSION = "18"
