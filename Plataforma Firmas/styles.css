@@ -2616,3 +2616,22 @@ canvas {
 .signature-info-auto ul {
     font-size: 12px !important; /* Un poco más grande */
 }
+
+/* Estilos para el botón de registro */
+.btn-outline {
+    background: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    transition: all 0.3s;
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Separación entre botones */
+.login-card .btn {
+    margin-bottom: 10px;
+}
