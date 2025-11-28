@@ -1,111 +1,129 @@
-// Sistema de almacenamiento local para Cente Docs
-class LocalStorageService {
+// Sistema de almacenamiento en la nube con Firebase
+class CloudStorageService {
     constructor() {
-        this.init();
-    }
-
-    init() {
-        // Inicializar estructuras si no existen
-        if (!this.getFromStorage('users')) {
-            this.saveToStorage('users', {});
-        }
-        if (!this.getFromStorage('documents')) {
-            this.saveToStorage('documents', []);
-        }
-        if (!this.getFromStorage('activities')) {
-            this.saveToStorage('activities', []);
-        }
+        this.db = firebase.firestore();
+        this.auth = firebase.auth();
     }
 
     // Usuarios
     async saveUser(user) {
-        const users = this.getFromStorage('users') || {};
-        users[user.email] = user;
-        this.saveToStorage('users', users);
-        return user;
+        try {
+            await this.db.collection('users').doc(user.email).set({
+                ...user,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return user;
+        } catch (error) {
+            console.error('Error saving user to Firebase:', error);
+            throw error;
+        }
     }
 
     async getUser(email) {
-        const users = this.getFromStorage('users') || {};
-        return users[email] || null;
-    }
-
-    async getAllUsers() {
-        return this.getFromStorage('users') || {};
-    }
-
-    // Documentos
-    async saveDocument(doc) {
-        const documents = this.getFromStorage('documents') || [];
-        const existingIndex = documents.findIndex(d => d.id === doc.id);
-        
-        if (existingIndex >= 0) {
-            documents[existingIndex] = doc;
-        } else {
-            documents.push(doc);
-        }
-        
-        // Ordenar por fecha (más reciente primero)
-        documents.sort((a, b) => new Date(b.uploadDate) - new Date(a.uploadDate));
-        this.saveToStorage('documents', documents);
-        return doc;
-    }
-
-    async getUserDocuments(userId) {
-        const documents = this.getFromStorage('documents') || [];
-        return documents.filter(doc => doc.uploadedBy === userId);
-    }
-
-    async getAllDocuments() {
-        return this.getFromStorage('documents') || [];
-    }
-
-    async deleteDocument(documentId) {
-        const documents = this.getFromStorage('documents') || [];
-        const filtered = documents.filter(doc => doc.id !== documentId);
-        this.saveToStorage('documents', filtered);
-        return true;
-    }
-
-    // Actividades
-    async saveActivity(activity) {
-        const activities = this.getFromStorage('activities') || [];
-        activities.unshift({
-            ...activity,
-            id: 'act_' + Date.now(),
-            timestamp: new Date()
-        });
-        
-        // MANTENER SOLO LAS ÚLTIMAS 50 ACTIVIDADES
-        if (activities.length > 50) {
-            activities.splice(50);
-        }
-        
-        this.saveToStorage('activities', activities);
-        return activity;
-    }
-
-    async getRecentActivities(limit = 5) { // CAMBIADO: Máximo 5 actividades
-        const activities = this.getFromStorage('activities') || [];
-        return activities.slice(0, limit);
-    }
-
-    // Helper methods
-    getFromStorage(key) {
         try {
-            const item = localStorage.getItem(`centedocs_${key}`);
-            return item ? JSON.parse(item) : null;
+            const doc = await this.db.collection('users').doc(email).get();
+            return doc.exists ? doc.data() : null;
         } catch (error) {
-            console.error('Error reading from storage:', error);
+            console.error('Error getting user from Firebase:', error);
             return null;
         }
     }
 
-    saveToStorage(key, value) {
+    async getAllUsers() {
         try {
-            localStorage.setItem(`centedocs_${key}`, JSON.stringify(value));
+            const snapshot = await this.db.collection('users').get();
+            const users = {};
+            snapshot.forEach(doc => {
+                users[doc.id] = doc.data();
+            });
+            return users;
         } catch (error) {
-            console.error('Error saving to storage:', error);
+            console.error('Error getting users from Firebase:', error);
+            return {};
+        }
+    }
+
+    // Documentos
+    async saveDocument(doc) {
+        try {
+            await this.db.collection('documents').doc(doc.id).set({
+                ...doc,
+                uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            return doc;
+        } catch (error) {
+            console.error('Error saving document to Firebase:', error);
+            throw error;
+        }
+    }
+
+    async getUserDocuments(userId) {
+        try {
+            const snapshot = await this.db.collection('documents')
+                .where('uploadedBy', '==', userId)
+                .orderBy('uploadDate', 'desc')
+                .get();
+            
+            return snapshot.docs.map(doc => doc.data());
+        } catch (error) {
+            console.error('Error getting user documents from Firebase:', error);
+            return [];
+        }
+    }
+
+    async getAllDocuments() {
+        try {
+            const snapshot = await this.db.collection('documents')
+                .orderBy('uploadDate', 'desc')
+                .get();
+            
+            return snapshot.docs.map(doc => doc.data());
+        } catch (error) {
+            console.error('Error getting documents from Firebase:', error);
+            return [];
+        }
+    }
+
+    async deleteDocument(documentId) {
+        try {
+            await this.db.collection('documents').doc(documentId).delete();
+            return true;
+        } catch (error) {
+            console.error('Error deleting document from Firebase:', error);
+            throw error;
+        }
+    }
+
+    // Actividades
+    async saveActivity(activity) {
+        try {
+            const activityWithId = {
+                ...activity,
+                id: 'act_' + Date.now(),
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            await this.db.collection('activities').add(activityWithId);
+            return activityWithId;
+        } catch (error) {
+            console.error('Error saving activity to Firebase:', error);
+            throw error;
+        }
+    }
+
+    async getRecentActivities(limit = 5) {
+        try {
+            const snapshot = await this.db.collection('activities')
+                .orderBy('timestamp', 'desc')
+                .limit(limit)
+                .get();
+            
+            return snapshot.docs.map(doc => doc.data());
+        } catch (error) {
+            console.error('Error getting activities from Firebase:', error);
+            return [];
         }
     }
 }
@@ -120,104 +138,156 @@ const AppState = {
     currentZoom: 1.0
 };
 
-// Sistema de Autenticación Local
+// Sistema de Autenticación con Firebase
 class AuthService {
     static async registerUser(email, password, name) {
         try {
-            const storage = new LocalStorageService();
-            const existingUser = await storage.getUser(email);
-            
-            if (existingUser) {
-                return { 
-                    success: false, 
-                    error: 'Ya existe una cuenta con este correo electrónico' 
-                };
-            }
+            const userCredential = await firebase.auth().createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
 
-            const user = {
-                uid: 'user_' + Date.now(),
-                email: email,
+            const userData = {
+                uid: user.uid,
+                email: user.email,
                 name: name,
                 role: 'owner',
                 avatar: name.substring(0, 2).toUpperCase(),
-                password: password,
                 createdAt: new Date(),
                 permissions: ['read', 'write', 'share']
             };
 
-            await storage.saveUser(user);
+            const storage = new CloudStorageService();
+            await storage.saveUser(userData);
             
-            // Guardar actividad
             await storage.saveActivity({
                 type: 'user_register',
                 description: `Se registró en el sistema: ${name}`,
                 userName: name
             });
 
-            return { success: true, user: user };
+            return { success: true, user: userData };
         } catch (error) {
-            console.error('Error en registro:', error);
-            return { success: false, error: 'Error al crear la cuenta' };
+            console.error('Error en registro Firebase:', error);
+            return { success: false, error: this.getAuthErrorMessage(error) };
         }
     }
 
     static async loginUser(email, password) {
         try {
-            const storage = new LocalStorageService();
-            const user = await storage.getUser(email);
-            
-            if (!user) {
-                return { success: false, error: 'No existe una cuenta con este correo' };
+            const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+            const firebaseUser = userCredential.user;
+
+            const storage = new CloudStorageService();
+            const userData = await storage.getUser(firebaseUser.email);
+
+            if (!userData) {
+                return { success: false, error: 'Usuario no encontrado en la base de datos' };
             }
 
-            if (user.password !== password) {
-                return { success: false, error: 'La contraseña es incorrecta' };
-            }
-
-            // Guardar actividad
             await storage.saveActivity({
                 type: 'user_login',
                 description: `Inició sesión en el sistema`,
-                userName: user.name
+                userName: userData.name
             });
 
             return { 
                 success: true, 
-                user: {
-                    uid: user.uid,
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                    avatar: user.avatar,
-                    permissions: user.permissions
-                }
+                user: userData
             };
         } catch (error) {
-            console.error('Error en login:', error);
-            return { success: false, error: 'Error en el inicio de sesión' };
+            console.error('Error en login Firebase:', error);
+            return { success: false, error: this.getAuthErrorMessage(error) };
+        }
+    }
+
+    static getAuthErrorMessage(error) {
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                return 'Ya existe una cuenta con este correo electrónico';
+            case 'auth/invalid-email':
+                return 'El correo electrónico no es válido';
+            case 'auth/operation-not-allowed':
+                return 'La operación no está permitida';
+            case 'auth/weak-password':
+                return 'La contraseña es demasiado débil';
+            case 'auth/user-disabled':
+                return 'La cuenta ha sido deshabilitada';
+            case 'auth/user-not-found':
+                return 'No existe una cuenta con este correo';
+            case 'auth/wrong-password':
+                return 'La contraseña es incorrecta';
+            case 'auth/network-request-failed':
+                return 'Error de conexión. Verifica tu internet';
+            default:
+                return 'Error en la autenticación: ' + error.message;
         }
     }
 
     static logout() {
+        firebase.auth().signOut();
         AppState.currentUser = null;
         AppState.currentDocument = null;
         AppState.documentSignatures = [];
-        localStorage.removeItem('centedocs_currentUser');
+        
         showNotification('Sesión cerrada correctamente');
         
-        // Mostrar login
         document.getElementById('loginScreen').style.display = 'flex';
         document.getElementById('appContainer').classList.remove('active');
     }
 
     static getCurrentUser() {
-        const user = localStorage.getItem('centedocs_currentUser');
-        return user ? JSON.parse(user) : null;
+        return AppState.currentUser;
     }
 
     static setCurrentUser(user) {
-        localStorage.setItem('centedocs_currentUser', JSON.stringify(user));
         AppState.currentUser = user;
+    }
+
+    static initAuthListener() {
+        firebase.auth().onAuthStateChanged(async (user) => {
+            if (user) {
+                console.log('Usuario autenticado:', user.email);
+                const storage = new CloudStorageService();
+                const userData = await storage.getUser(user.email);
+                
+                if (userData) {
+                    AuthService.setCurrentUser(userData);
+                    
+                    const currentUserName = document.getElementById('currentUserName');
+                    const userAvatar = document.getElementById('userAvatar');
+                    const userRoleBadge = document.getElementById('userRoleBadge');
+                    
+                    if (currentUserName) currentUserName.textContent = userData.name;
+                    if (userAvatar) userAvatar.textContent = userData.avatar;
+                    if (userRoleBadge) {
+                        userRoleBadge.textContent = 'Propietario';
+                    }
+                    
+                    try {
+                        const autoSignature = await SignatureGenerator.createUserSignature(userData);
+                        AppState.currentSignature = autoSignature;
+                        updateAutoSignaturePreview();
+                    } catch (error) {
+                        console.error('Error generating signature:', error);
+                    }
+                    
+                    document.getElementById('loginScreen').style.display = 'none';
+                    document.getElementById('appContainer').classList.add('active');
+                    
+                    CollaborationService.updateOnlineUsers();
+                    CollaborationService.renderCollaborators();
+                    FileService.renderFilesGrid();
+                    DocumentService.renderDocumentSelector();
+                    ActivityService.loadRecentActivities();
+                    
+                    showNotification(`¡Bienvenido a Cente Docs, ${userData.name}!`);
+                }
+            } else {
+                console.log('No hay usuario autenticado');
+                AppState.currentUser = null;
+                document.getElementById('loginScreen').style.display = 'flex';
+                document.getElementById('appContainer').classList.remove('active');
+            }
+        });
     }
 }
 
@@ -227,7 +297,7 @@ class FileService {
     
     static async uploadFiles(files) {
         const uploadedFiles = [];
-        const storage = new LocalStorageService();
+        const storage = new CloudStorageService();
         
         for (const file of Array.from(files)) {
             try {
@@ -248,7 +318,6 @@ class FileService {
                 await storage.saveDocument(fileData);
                 uploadedFiles.push(fileData);
                 
-                // Agregar actividad
                 await storage.saveActivity({
                     type: 'file_upload',
                     description: `Subió el archivo: ${file.name}`,
@@ -262,7 +331,6 @@ class FileService {
             }
         }
         
-        // ACTUALIZAR: Refrescar el selector de documentos
         DocumentService.refreshDocumentSelector();
         
         return uploadedFiles;
@@ -270,7 +338,7 @@ class FileService {
     
     static async loadUserDocuments() {
         try {
-            const storage = new LocalStorageService();
+            const storage = new CloudStorageService();
             const documents = await storage.getUserDocuments(AppState.currentUser.uid);
             this.files = documents;
             return documents;
@@ -282,7 +350,7 @@ class FileService {
 
     static async loadAllDocuments() {
         try {
-            const storage = new LocalStorageService();
+            const storage = new CloudStorageService();
             const documents = await storage.getAllDocuments();
             this.files = documents;
             return documents;
@@ -402,7 +470,6 @@ class FileService {
         
         if (!filesGrid || !noFiles || !filesCount) return;
         
-        // Cargar documentos del usuario
         await this.loadUserDocuments();
         const userFiles = this.files;
         
@@ -432,7 +499,7 @@ class FileService {
                 ${signedBadge}
                 <div class="file-name">${file.name}</div>
                 <div class="file-info">
-                    <div>Subido: ${new Date(file.uploadDate).toLocaleDateString('es-ES')}</div>
+                    <div>Subido: ${new Date(file.uploadDate?.toDate?.() || file.uploadDate).toLocaleDateString('es-ES')}</div>
                     <div>Tamaño: ${this.formatFileSize(file.size)}</div>
                     <div>Por: ${file.uploadedByName}</div>
                     <div>Tipo: ${this.getFileTypeDisplayName(fileInfo.type)}</div>
@@ -454,16 +521,12 @@ class FileService {
         });
     }
 
-    // NUEVO MÉTODO: Editar o firmar archivo
     static async editOrSignFile(fileId) {
         const file = this.files.find(f => f.id === fileId);
         if (file) {
-            // Cambiar a la página de documentos
             switchPage('documents');
             
-            // Esperar un momento para que la página se cargue
             setTimeout(async () => {
-                // Cargar el documento en el visor
                 await DocumentService.loadDocument(file);
                 showNotification(`Documento "${file.name}" cargado para edición/firma`);
             }, 100);
@@ -498,15 +561,13 @@ class FileService {
         const file = this.files.find(f => f.id === fileId);
         if (file) {
             try {
-                const storage = new LocalStorageService();
+                const storage = new CloudStorageService();
                 await storage.deleteDocument(fileId);
                 
-                // Actualizar lista local
                 this.files = this.files.filter(f => f.id !== fileId);
                 this.renderFilesGrid();
                 DocumentService.renderDocumentSelector();
                 
-                // Agregar actividad
                 await storage.saveActivity({
                     type: 'file_delete',
                     description: `Eliminó el archivo: ${file.name}`,
@@ -531,7 +592,7 @@ class FileService {
     
     static async addSignedDocument(originalFileId, signedBlob, fileName, signatures) {
         try {
-            const storage = new LocalStorageService();
+            const storage = new CloudStorageService();
             
             const signedFile = {
                 id: 'signed_' + Date.now(),
@@ -550,7 +611,6 @@ class FileService {
 
             await storage.saveDocument(signedFile);
             
-            // Agregar actividad
             await storage.saveActivity({
                 type: 'document_signed',
                 description: `Firmó el documento: ${fileName}`,
@@ -558,7 +618,6 @@ class FileService {
                 userName: AppState.currentUser.name
             });
             
-            // Actualizar interfaces
             await this.loadUserDocuments();
             this.renderFilesGrid();
             DocumentService.renderDocumentSelector();
@@ -570,7 +629,6 @@ class FileService {
         }
     }
 
-    // NUEVO MÉTODO: Filtrar archivos por búsqueda
     static filterFiles(searchTerm) {
         const fileCards = document.querySelectorAll('.file-card');
         let visibleCount = 0;
@@ -585,13 +643,11 @@ class FileService {
             }
         });
         
-        // Actualizar contador
         const filesCount = document.getElementById('filesCount');
         if (filesCount) {
             filesCount.textContent = `${visibleCount} archivo${visibleCount !== 1 ? 's' : ''}`;
         }
         
-        // Mostrar mensaje si no hay resultados
         const noFiles = document.getElementById('noFiles');
         const filesGrid = document.getElementById('filesGrid');
         if (noFiles && filesGrid) {
@@ -626,8 +682,8 @@ class SignatureGenerator {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            const width = 500; // Reducido un poco el ancho
-            const height = 120; // Reducido un poco el alto
+            const width = 500;
+            const height = 120;
             canvas.width = width;
             canvas.height = height;
             
@@ -638,20 +694,17 @@ class SignatureGenerator {
             
             const leftWidth = 250;
             
-            // TIPO DE LETRA para el nombre izquierdo (más grande)
             ctx.font = 'bold 22px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
             ctx.fillStyle = '#2f6c46';
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
             
-            // Dibujar el nombre en la izquierda (centrado verticalmente)
             let nameY = (height - (nameLines.length * 26)) / 2;
             nameLines.forEach(line => {
                 ctx.fillText(line, 15, nameY);
                 nameY += 26;
             });
             
-            // Línea separadora vertical
             ctx.strokeStyle = '#2f6c46';
             ctx.lineWidth = 1;
             ctx.beginPath();
@@ -659,28 +712,23 @@ class SignatureGenerator {
             ctx.lineTo(leftWidth + 5, height - 15);
             ctx.stroke();
             
-            // TIPO DE LETRA para la información adicional (derecha)
             ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
             ctx.fillStyle = '#333333';
             ctx.textAlign = 'left';
             
-            // Obtener fecha formateada
             const now = new Date();
             const formattedDate = this.formatDate(now);
             
-            // INFORMACIÓN SIMPLIFICADA - Solo nombre y fecha
             const lines = [
                 `Firmado digitalmente por:`,
                 `${user.name}`,
                 `Fecha: ${formattedDate}`
             ];
             
-            // Dibujar cada línea en la parte derecha
             let y = 25;
             const rightStartX = leftWidth + 15;
             
             lines.forEach(line => {
-                // Usar negrita para el primer elemento
                 if (line.startsWith('Firmado digitalmente')) {
                     ctx.font = 'bold 14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
                 } else if (line === user.name) {
@@ -695,7 +743,6 @@ class SignatureGenerator {
                 y += 22;
             });
                         
-            // Convertir a data URL con fondo transparente
             const dataURL = canvas.toDataURL('image/png');
             resolve(dataURL);
         });
@@ -837,18 +884,15 @@ class DocumentService {
     static async loadDocument(file) {
         return new Promise((resolve) => {
             setTimeout(() => {
-                // LIMPIAR COMPLETAMENTE LAS FIRMAS ANTERIORES
                 this.documentSignatures = [];
                 this.currentSignature = null;
                 this.currentZoom = 1.0;
 
-                // Limpiar la capa de firmas en el DOM
                 const signatureLayer = document.getElementById('signatureLayer');
                 if (signatureLayer) {
                     signatureLayer.innerHTML = '';
                 }
 
-                // Actualizar la lista de firmas
                 this.renderSignaturesList();
 
                 this.currentDocument = {
@@ -866,7 +910,6 @@ class DocumentService {
                     source: file.source || 'uploaded'
                 };
                 
-                // Si el documento ya tiene firmas, cargarlas
                 if (file.signatures && file.signatures.length > 0) {
                     this.documentSignatures = [...file.signatures];
                 }
@@ -878,7 +921,6 @@ class DocumentService {
                         this.renderSignaturesList();
                         this.initializeDocumentInteractions();
                         
-                        // APLICAR ZOOM INICIAL
                         this.applyRealZoom();
                         
                         syncFileSystem();
@@ -911,13 +953,10 @@ class DocumentService {
         if (documentContainer) documentContainer.style.display = 'block';
 
         try {
-            // Limpiar canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Mostrar mensaje de carga
             this.showLoadingMessage(canvas, ctx);
 
-            // Renderizar el documento real basado en el tipo
             if (this.currentDocument.type === 'application/pdf') {
                 await this.renderPDFDocument(canvas, ctx);
             } else if (this.currentDocument.type.startsWith('image/')) {
@@ -926,10 +965,8 @@ class DocumentService {
                 await this.renderGenericDocument(canvas, ctx);
             }
 
-            // Renderizar firmas existentes (si las hay)
             this.renderExistingSignatures();
             
-            // Ajustar el contenedor al tamaño del canvas
             this.adjustContainerSize();
             
         } catch (error) {
@@ -944,7 +981,6 @@ class DocumentService {
         const signatureLayer = document.getElementById('signatureLayer');
         
         if (canvas && container) {
-            // Resetear a tamaño natural
             const displayWidth = canvas.width;
             const displayHeight = canvas.height;
             
@@ -960,11 +996,9 @@ class DocumentService {
                 signatureLayer.style.transform = 'none';
             }
             
-            // Resetear zoom a 100%
             this.currentZoom = 1.0;
             this.applyRealZoom();
             
-            // Reposicionar firmas en tamaño natural
             this.documentSignatures.forEach(signature => {
                 const signatureElement = document.querySelector(`[data-signature-id="${signature.id}"]`);
                 if (signatureElement) {
@@ -988,13 +1022,11 @@ class DocumentService {
             const originalWidth = viewport.width;
             const originalHeight = viewport.height;
             
-            // Usar un multiplicador de calidad para mejor resolución
             const optimalSize = this.calculateOptimalDocumentSize(originalWidth, originalHeight, 1.5);
             
             canvas.width = optimalSize.width;
             canvas.height = optimalSize.height;
             
-            // Configurar el contexto para mejor calidad
             ctx.imageSmoothingEnabled = true;
             ctx.imageSmoothingQuality = 'high';
             
@@ -1018,7 +1050,6 @@ class DocumentService {
         canvas.width = optimalSize.width;
         canvas.height = optimalSize.height;
         
-        // Mejorar calidad del renderizado
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         
@@ -1051,13 +1082,11 @@ class DocumentService {
                 const originalWidth = img.naturalWidth;
                 const originalHeight = img.naturalHeight;
                 
-                // Usar calidad mejorada para imágenes
                 const optimalSize = this.calculateOptimalDocumentSize(originalWidth, originalHeight, 1.2);
                 
                 canvas.width = optimalSize.width;
                 canvas.height = optimalSize.height;
                 
-                // Configurar calidad de renderizado
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
                 
@@ -1168,7 +1197,6 @@ class DocumentService {
         ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
     }
 
-    // SISTEMA DE ZOOM
     static zoomIn() {
         this.currentZoom = Math.min(this.currentZoom + 0.25, 3.0);
         this.applyRealZoom();
@@ -1185,28 +1213,23 @@ class DocumentService {
         const signatureLayer = document.getElementById('signatureLayer');
         
         if (canvas && container) {
-            // Obtener el tamaño original del canvas (sin zoom)
             const originalWidth = canvas.width;
             const originalHeight = canvas.height;
             
-            // Calcular nuevo tamaño basado en zoom
             const scaledWidth = originalWidth * this.currentZoom;
             const scaledHeight = originalHeight * this.currentZoom;
             
-            // Aplicar zoom REAL: cambiar el tamaño del canvas y contenedor
             canvas.style.width = scaledWidth + 'px';
             canvas.style.height = scaledHeight + 'px';
             
             container.style.width = scaledWidth + 'px';
             container.style.height = scaledHeight + 'px';
             
-            // Ajustar el layer de firmas al mismo tamaño
             if (signatureLayer) {
                 signatureLayer.style.width = scaledWidth + 'px';
                 signatureLayer.style.height = scaledHeight + 'px';
             }
             
-            // Reposicionar firmas según el zoom
             this.repositionSignaturesForZoom();
         }
         
@@ -1218,14 +1241,12 @@ class DocumentService {
         const canvas = document.getElementById('documentCanvas');
         if (!canvas) return;
         
-        // Obtener el tamaño original del canvas (sin zoom)
         const originalWidth = canvas.width / this.currentZoom;
         const originalHeight = canvas.height / this.currentZoom;
         
         this.documentSignatures.forEach(signature => {
             const signatureElement = document.querySelector(`[data-signature-id="${signature.id}"]`);
             if (signatureElement) {
-                // Calcular posición y tamaño escalados
                 const scaledX = (signature.x / originalWidth) * canvas.width;
                 const scaledY = (signature.y / originalHeight) * canvas.height;
                 const scaledWidth = (signature.width / originalWidth) * canvas.width;
@@ -1256,7 +1277,6 @@ class DocumentService {
             signatureLayer.appendChild(signatureElement);
         });
         
-        // Aplicar zoom actual a las firmas recién renderizadas
         this.repositionSignaturesForZoom();
     }
 
@@ -1471,7 +1491,6 @@ class DocumentService {
                     img.onerror = reject;
                 });
                 
-                // Tamaño máximo para firmas cargadas
                 const maxWidth = 280;
                 const maxHeight = 140;
                 
@@ -1484,12 +1503,10 @@ class DocumentService {
                     height = height * ratio;
                 }
             } else {
-                // Tamaño por defecto para firmas automáticas
                 width = 250;
                 height = 90;
             }
 
-            // Guardar posiciones RELATIVAS al tamaño original del canvas
             const signature = {
                 id: 'sig_' + Date.now(),
                 data: this.currentSignature.data,
@@ -1591,7 +1608,6 @@ class DocumentService {
 
         selector.innerHTML = '<option value="">Seleccionar documento...</option>';
         
-        // Obtener documentos actualizados
         const unsignedFiles = FileService.files.filter(file => file.source === 'uploaded');
         
         const sortedFiles = [...unsignedFiles].sort((a, b) => 
@@ -1613,16 +1629,13 @@ class DocumentService {
             }
         });
         
-        // Si hay documentos pero ninguno seleccionado, seleccionar el primero
         if (sortedFiles.length > 0 && (!this.currentDocument || selector.value === "")) {
             selector.value = sortedFiles[0].id;
-            // Disparar el evento change para cargar el documento
             const event = new Event('change');
             selector.dispatchEvent(event);
         }
     }
 
-    // NUEVO MÉTODO: Refrescar selector
     static refreshDocumentSelector() {
         this.renderDocumentSelector();
     }
@@ -1653,23 +1666,19 @@ class DocumentService {
         }
     }
 
-    // NUEVO MÉTODO: Cargar configuración del usuario
     static loadUserSettings() {
         if (!AppState.currentUser) return;
         
-        // Actualizar campos con información real del usuario
         const userFullName = document.getElementById('userFullName');
         const userEmail = document.getElementById('userEmail');
         
         if (userFullName) userFullName.value = AppState.currentUser.name;
         if (userEmail) userEmail.value = AppState.currentUser.email;
         
-        // Agregar event listeners para guardar cambios
         if (userFullName) {
             userFullName.addEventListener('change', function() {
                 AppState.currentUser.name = this.value;
-                // Actualizar en almacenamiento
-                const storage = new LocalStorageService();
+                const storage = new CloudStorageService();
                 storage.getUser(AppState.currentUser.email).then(user => {
                     if (user) {
                         user.name = this.value;
@@ -1683,13 +1692,12 @@ class DocumentService {
         if (userEmail) {
             userEmail.addEventListener('change', function() {
                 showNotification('El correo electrónico no se puede modificar', 'warning');
-                this.value = AppState.currentUser.email; // Revertir cambio
+                this.value = AppState.currentUser.email;
             });
         }
     }
 }
 
-// Agregar un debounce para el redimensionamiento
 let resizeTimeout;
 window.addEventListener('resize', () => {
     clearTimeout(resizeTimeout);
@@ -1728,23 +1736,19 @@ class DocumentExportService {
     static async combineWithPDF() {
         return new Promise(async (resolve, reject) => {
             try {
-                // Renderizar PDF a alta resolución
                 const loadingTask = pdfjsLib.getDocument(DocumentService.currentDocument.url);
                 const pdf = await loadingTask.promise;
                 const page = await pdf.getPage(1);
                 
-                // Usar una escala más alta para mejor calidad
                 const scale = 2.0;
                 const viewport = page.getViewport({ scale });
                 
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // Configurar canvas con alta resolución
                 canvas.width = viewport.width;
                 canvas.height = viewport.height;
                 
-                // Configurar calidad de renderizado
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
                 
@@ -1755,11 +1759,9 @@ class DocumentExportService {
                 
                 await page.render(renderContext).promise;
 
-                // Ahora agregar las firmas en alta resolución
                 const displayCanvas = document.getElementById('documentCanvas');
                 const signatureLayer = document.getElementById('signatureLayer');
                 
-                // Calcular factor de escala entre el canvas de visualización y el de alta resolución
                 const scaleFactorX = canvas.width / displayCanvas.width;
                 const scaleFactorY = canvas.height / displayCanvas.height;
                 
@@ -1773,14 +1775,12 @@ class DocumentExportService {
                         const width = parseFloat(signature.style.width) * scaleFactorX;
                         const height = parseFloat(signature.style.height) * scaleFactorY;
                         
-                        // Dibujar firma con suavizado
                         ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(img, x, y, width, height);
                     }
                 }
 
-                // Crear PDF de alta calidad
                 const { jsPDF } = window.jspdf;
                 const pdfOutput = new jsPDF({
                     orientation: canvas.width > canvas.height ? 'landscape' : 'portrait',
@@ -1788,7 +1788,6 @@ class DocumentExportService {
                     format: [canvas.width, canvas.height]
                 });
 
-                // Usar máxima calidad para la imagen
                 const imgData = canvas.toDataURL('image/png', 1.0);
                 pdfOutput.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height, undefined, 'FAST');
                 
@@ -1812,7 +1811,6 @@ class DocumentExportService {
     static async combineWithImage() {
         return new Promise(async (resolve, reject) => {
             try {
-                // Cargar la imagen original
                 const img = new Image();
                 img.src = DocumentService.currentDocument.url;
                 await new Promise((resolve, reject) => {
@@ -1820,20 +1818,16 @@ class DocumentExportService {
                     img.onerror = reject;
                 });
                 
-                // Crear canvas con el tamaño original de la imagen
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
                 
-                // Configurar calidad
                 ctx.imageSmoothingEnabled = true;
                 ctx.imageSmoothingQuality = 'high';
                 
-                // Dibujar la imagen original
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 
-                // Obtener y escalar las firmas
                 const displayCanvas = document.getElementById('documentCanvas');
                 const signatureLayer = document.getElementById('signatureLayer');
                 
@@ -1856,7 +1850,6 @@ class DocumentExportService {
                     }
                 }
                 
-                // Crear blob de alta calidad
                 canvas.toBlob((blob) => {
                     const url = URL.createObjectURL(blob);
                     resolve({
@@ -1879,7 +1872,6 @@ class DocumentExportService {
             try {
                 const viewerContent = document.getElementById('viewerContent');
                 
-                // Usar html2canvas con configuración de alta calidad
                 html2canvas(viewerContent, {
                     useCORS: true,
                     allowTaint: true,
@@ -1890,19 +1882,15 @@ class DocumentExportService {
                     windowWidth: viewerContent.scrollWidth,
                     windowHeight: viewerContent.scrollHeight
                 }).then(canvas => {
-                    // Crear un canvas adicional para aplicar mejoras de calidad
                     const highQualityCanvas = document.createElement('canvas');
                     const ctx = highQualityCanvas.getContext('2d');
                     
-                    // Mantener alta resolución
                     highQualityCanvas.width = canvas.width;
                     highQualityCanvas.height = canvas.height;
                     
-                    // Configurar calidad
                     ctx.imageSmoothingEnabled = true;
                     ctx.imageSmoothingQuality = 'high';
                     
-                    // Dibujar el contenido original
                     ctx.drawImage(canvas, 0, 0);
                     
                     highQualityCanvas.toBlob((blob) => {
@@ -1948,7 +1936,6 @@ class DocumentExportService {
     }
 }
 
-// Asignar el método saveDocumentWithSignatures
 DocumentService.saveDocumentWithSignatures = async function() {
     if (!this.currentDocument) {
         showNotification('No hay documento seleccionado', 'error');
@@ -1965,10 +1952,8 @@ DocumentService.saveDocumentWithSignatures = async function() {
     try {
         const result = await DocumentExportService.combineSignaturesWithDocument();
         
-        // Descargar el documento combinado
         DocumentExportService.downloadCombinedDocument(result.blob, result.fileName);
         
-        // Agregar el documento firmado al sistema de archivos
         await FileService.addSignedDocument(
             this.currentDocument.id,
             result.blob,
@@ -1976,7 +1961,6 @@ DocumentService.saveDocumentWithSignatures = async function() {
             this.documentSignatures
         );
         
-        // Limpiar las firmas actuales para permitir nuevas firmas
         this.documentSignatures = [];
         this.renderExistingSignatures();
         this.renderSignaturesList();
@@ -1989,7 +1973,6 @@ DocumentService.saveDocumentWithSignatures = async function() {
     }
 };
 
-// Sistema de Previsualización Modal
 class PreviewService {
     static async showPreview(blob, type, fileName) {
         const modal = document.getElementById('previewModal');
@@ -2037,7 +2020,6 @@ class PreviewService {
     }
 }
 
-// Función para previsualizar el documento combinado
 DocumentService.previewCombinedDocument = async function() {
     if (!this.currentDocument) {
         showNotification('No hay documento seleccionado', 'error');
@@ -2065,8 +2047,8 @@ DocumentService.previewCombinedDocument = async function() {
 class ActivityService {
     static async loadRecentActivities() {
         try {
-            const storage = new LocalStorageService();
-            const activities = await storage.getRecentActivities(5); // CAMBIADO: Máximo 5 actividades
+            const storage = new CloudStorageService();
+            const activities = await storage.getRecentActivities(5);
             this.renderActivities(activities);
         } catch (error) {
             console.error('Error loading activities:', error);
@@ -2077,11 +2059,9 @@ class ActivityService {
         const activityFeed = document.querySelector('.activity-feed');
         if (!activityFeed) return;
         
-        // Limpiar actividades existentes (excepto el título)
         const activityItems = activityFeed.querySelectorAll('.activity-item');
         activityItems.forEach(item => item.remove());
         
-        // Mostrar máximo 5 actividades
         const limitedActivities = activities.slice(0, 5);
         
         limitedActivities.forEach(activity => {
@@ -2089,7 +2069,7 @@ class ActivityService {
             activityItem.className = 'activity-item';
             
             const icon = this.getActivityIcon(activity.type);
-            const time = new Date(activity.timestamp).toLocaleTimeString('es-ES', {
+            const time = new Date(activity.timestamp?.toDate?.() || activity.timestamp).toLocaleTimeString('es-ES', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
@@ -2130,33 +2110,36 @@ class CollaborationService {
         
         usersList.innerHTML = '';
         
-        // Cargar todos los usuarios registrados
-        const storage = new LocalStorageService();
-        const allUsers = await storage.getAllUsers();
-        
-        Object.values(allUsers).forEach(user => {
-            const userItem = document.createElement('li');
-            userItem.className = 'user-item';
-            userItem.innerHTML = `
-                <div class="user-status ${user.email === AppState.currentUser.email ? 'online' : 'away'}"></div>
-                <div>${user.name} 
-                    <span class="permission-badge permission-${user.role}">
-                        ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
-                    </span>
-                </div>
-            `;
-            usersList.appendChild(userItem);
-        });
-        
-        if (usersList.children.length === 0) {
-            const emptyMessage = document.createElement('li');
-            emptyMessage.className = 'user-item';
-            emptyMessage.innerHTML = `
-                <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
-                    Solo tú estás conectado
-                </div>
-            `;
-            usersList.appendChild(emptyMessage);
+        try {
+            const storage = new CloudStorageService();
+            const allUsers = await storage.getAllUsers();
+            
+            Object.values(allUsers).forEach(user => {
+                const userItem = document.createElement('li');
+                userItem.className = 'user-item';
+                userItem.innerHTML = `
+                    <div class="user-status ${user.email === AppState.currentUser?.email ? 'online' : 'away'}"></div>
+                    <div>${user.name} 
+                        <span class="permission-badge permission-${user.role}">
+                            ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
+                        </span>
+                    </div>
+                `;
+                usersList.appendChild(userItem);
+            });
+            
+            if (usersList.children.length === 0) {
+                const emptyMessage = document.createElement('li');
+                emptyMessage.className = 'user-item';
+                emptyMessage.innerHTML = `
+                    <div style="color: rgba(255,255,255,0.7); font-size: 14px;">
+                        Solo tú estás conectado
+                    </div>
+                `;
+                usersList.appendChild(emptyMessage);
+            }
+        } catch (error) {
+            console.error('Error loading online users:', error);
         }
     }
 
@@ -2167,7 +2150,7 @@ class CollaborationService {
         if (!collaboratorsList || !collaboratorsCount) return;
         
         try {
-            const storage = new LocalStorageService();
+            const storage = new CloudStorageService();
             const allUsers = await storage.getAllUsers();
             const collaborators = Object.values(allUsers);
             
@@ -2187,7 +2170,7 @@ class CollaborationService {
                         </div>
                     </div>
                     <div class="collaborator-actions">
-                        ${user.email !== AppState.currentUser.email ? `
+                        ${user.email !== AppState.currentUser?.email ? `
                         <button class="btn btn-outline" onclick="CollaborationService.removeCollaborator('${user.email}')">
                             Remover
                         </button>
@@ -2203,20 +2186,18 @@ class CollaborationService {
     }
     
     static async removeCollaborator(email) {
-        if (email === AppState.currentUser.email) {
+        if (email === AppState.currentUser?.email) {
             showNotification('No puedes removerte a ti mismo', 'error');
             return;
         }
         
         if (confirm(`¿Estás seguro de que quieres remover a este colaborador?`)) {
-            const storage = new LocalStorageService();
-            const users = await storage.getAllUsers();
-            delete users[email];
-            storage.saveToStorage('users', users);
-            
-            this.renderCollaborators();
-            this.updateOnlineUsers();
-            showNotification('Colaborador removido', 'warning');
+            try {
+                showNotification('Funcionalidad de remover colaboradores en desarrollo', 'warning');
+            } catch (error) {
+                console.error('Error removing collaborator:', error);
+                showNotification('Error al remover colaborador', 'error');
+            }
         }
     }
 }
@@ -2245,10 +2226,6 @@ function updateTimestamp() {
     }
 }
 
-function applyUserPermissions() {
-    // Implementar según roles si es necesario
-}
-
 function switchPage(pageId) {
     document.querySelectorAll('.page').forEach(page => {
         page.classList.remove('active');
@@ -2264,7 +2241,6 @@ function switchPage(pageId) {
         }
     });
     
-    // Cargar datos específicos de la página
     if (pageId === 'files') {
         FileService.renderFilesGrid();
     } else if (pageId === 'collaborators') {
@@ -2272,7 +2248,6 @@ function switchPage(pageId) {
     } else if (pageId === 'documents') {
         ActivityService.loadRecentActivities();
     } else if (pageId === 'settings') {
-        // ACTUALIZAR: Cargar información real del usuario en configuración
         DocumentService.loadUserSettings();
     }
 }
@@ -2298,56 +2273,8 @@ function updateAutoSignaturePreview() {
 
 // Inicialización de la aplicación
 document.addEventListener('DOMContentLoaded', function() {
-    // Verificar si hay un usuario logueado
-    const savedUser = AuthService.getCurrentUser();
-    if (savedUser) {
-        AppState.currentUser = savedUser;
-        
-        // Generar firma automática
-        SignatureGenerator.createUserSignature(AppState.currentUser)
-            .then(signature => {
-                AppState.currentSignature = signature;
-                updateAutoSignaturePreview();
-            })
-            .catch(error => {
-                console.error('Error generating signature:', error);
-            });
-        
-        // Actualizar UI
-        const currentUserName = document.getElementById('currentUserName');
-        const userAvatar = document.getElementById('userAvatar');
-        const userRoleBadge = document.getElementById('userRoleBadge');
-        
-        if (currentUserName) currentUserName.textContent = AppState.currentUser.name;
-        if (userAvatar) userAvatar.textContent = AppState.currentUser.avatar;
-        if (userRoleBadge) {
-            userRoleBadge.textContent = 'Propietario';
-        }
-        
-        // Mostrar aplicación
-        const loginScreen = document.getElementById('loginScreen');
-        const appContainer = document.getElementById('appContainer');
-        
-        if (loginScreen) loginScreen.style.display = 'none';
-        if (appContainer) appContainer.classList.add('active');
-        
-        // Inicializar servicios
-        CollaborationService.updateOnlineUsers();
-        CollaborationService.renderCollaborators();
-        FileService.renderFilesGrid();
-        DocumentService.renderDocumentSelector();
-        ActivityService.loadRecentActivities();
-        
-    } else {
-        // Mostrar pantalla de login
-        const loginScreen = document.getElementById('loginScreen');
-        const appContainer = document.getElementById('appContainer');
-        
-        if (loginScreen) loginScreen.style.display = 'flex';
-        if (appContainer) appContainer.classList.remove('active');
-    }
-    
-    // Configuración del sistema de autenticación - LOGIN
+    AuthService.initAuthListener();
+
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', async function(e) {
@@ -2365,43 +2292,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const result = await AuthService.loginUser(email.value, password.value);
                 
                 if (result.success) {
-                    AuthService.setCurrentUser(result.user);
-                    AppState.currentUser = result.user;
-                    
-                    // Generar firma automática
-                    try {
-                        const autoSignature = await SignatureGenerator.createUserSignature(result.user);
-                        AppState.currentSignature = autoSignature;
-                        updateAutoSignaturePreview();
-                    } catch (error) {
-                        console.error('Error generating signature:', error);
-                    }
-                    
-                    // Actualizar UI
-                    const currentUserName = document.getElementById('currentUserName');
-                    const userAvatar = document.getElementById('userAvatar');
-                    const userRoleBadge = document.getElementById('userRoleBadge');
-                    
-                    if (currentUserName) currentUserName.textContent = result.user.name;
-                    if (userAvatar) userAvatar.textContent = result.user.avatar;
-                    if (userRoleBadge) {
-                        userRoleBadge.textContent = 'Propietario';
-                    }
-                    
-                    // Mostrar aplicación
-                    const loginScreen = document.getElementById('loginScreen');
-                    const appContainer = document.getElementById('appContainer');
-                    
-                    if (loginScreen) loginScreen.style.display = 'none';
-                    if (appContainer) appContainer.classList.add('active');
-                    
-                    // Inicializar servicios
-                    CollaborationService.updateOnlineUsers();
-                    CollaborationService.renderCollaborators();
-                    FileService.renderFilesGrid();
-                    DocumentService.renderDocumentSelector();
-                    ActivityService.loadRecentActivities();
-                    
                     showNotification(`¡Bienvenido a Cente Docs, ${result.user.name}!`);
                 } else {
                     showNotification(result.error, 'error');
@@ -2412,7 +2302,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Sistema de REGISTRO
     const registerBtn = document.getElementById('registerBtn');
     if (registerBtn) {
         registerBtn.addEventListener('click', async function() {
@@ -2435,7 +2324,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (result.success) {
                     showNotification(`¡Cuenta creada exitosamente! Bienvenido ${name}`);
-                    // Limpiar formulario
                     document.getElementById('email').value = '';
                     document.getElementById('password').value = '';
                 } else {
@@ -2447,7 +2335,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Logout
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', function() {
@@ -2455,23 +2342,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Manejo de pestañas de firma
     document.querySelectorAll('.signature-tab').forEach(tab => {
         tab.addEventListener('click', function() {
             const tabId = this.dataset.tab;
             
-            // Remover active de todas las pestañas y contenidos
             document.querySelectorAll('.signature-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.signature-tab-content').forEach(c => c.classList.remove('active'));
             
-            // Activar pestaña y contenido actual
             this.classList.add('active');
             const content = document.getElementById(`${tabId}-tab`);
             if (content) content.classList.add('active');
         });
     });
     
-    // Botón para usar firma automática
     const useAutoSignatureBtn = document.getElementById('useAutoSignature');
     if (useAutoSignatureBtn) {
         useAutoSignatureBtn.addEventListener('click', function() {
@@ -2484,7 +2367,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Botón para actualizar firma automática
     const refreshAutoSignatureBtn = document.getElementById('refreshAutoSignature');
     if (refreshAutoSignatureBtn) {
         refreshAutoSignatureBtn.addEventListener('click', async function() {
@@ -2497,13 +2379,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const autoSignature = await SignatureGenerator.createUserSignature(AppState.currentUser);
                 AppState.currentSignature = autoSignature;
                 
-                // Actualizar vista previa
                 const signaturePreview = document.getElementById('signaturePreview');
                 if (signaturePreview) {
                     signaturePreview.src = autoSignature.data;
                 }
                 
-                // Actualizar previsualización automática
                 updateAutoSignaturePreview();
                 
                 showNotification('Firma automática actualizada');
@@ -2514,7 +2394,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Sistema de firmas - Cargar firma
     const signatureFileInput = document.getElementById('signatureFileInput');
     const uploadSignatureArea = document.getElementById('uploadSignatureArea');
     const saveUploadSignatureBtn = document.getElementById('saveUploadSignature');
@@ -2595,7 +2474,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Selector de documentos
     const documentSelector = document.getElementById('documentSelector');
     if (documentSelector) {
         documentSelector.addEventListener('change', function() {
@@ -2620,7 +2498,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Botón para subir documento DESDE LA PÁGINA DE DOCUMENTOS
     const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
     const documentFileInput = document.createElement('input');
     documentFileInput.type = 'file';
@@ -2639,22 +2516,18 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 showNotification(`Subiendo documento...`);
                 
-                // Subir archivos a FileService
                 const uploadedFiles = await FileService.uploadFiles(this.files);
                 
-                // Cargar el primer documento subido
                 if (uploadedFiles.length > 0) {
                     await DocumentService.loadDocument(uploadedFiles[0]);
                     showNotification(`Documento subido correctamente`);
                 }
                 
-                // Actualizar la página de archivos si está activa
                 if (document.getElementById('files-page') && 
                     document.getElementById('files-page').classList.contains('active')) {
                     FileService.renderFilesGrid();
                 }
                 
-                // Limpiar input para permitir subir más archivos
                 this.value = '';
                 
             } catch (error) {
@@ -2664,7 +2537,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Botón para agregar firma al documento
     const addSignatureBtn = document.getElementById('addSignatureBtn');
     if (addSignatureBtn) {
         addSignatureBtn.addEventListener('click', function() {
@@ -2682,7 +2554,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Botones de zoom
     const zoomInBtn = document.getElementById('zoomInBtn');
     const zoomOutBtn = document.getElementById('zoomOutBtn');
     
@@ -2702,7 +2573,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Agregar zoom con Ctrl + Rueda del mouse
     const viewerContent = document.getElementById('viewerContent');
     if (viewerContent) {
         viewerContent.addEventListener('wheel', function(e) {
@@ -2717,7 +2587,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, { passive: false });
     }
     
-    // Agregar atajos de teclado para zoom
     document.addEventListener('keydown', function(e) {
         if (e.ctrlKey) {
             if (e.key === '=' || e.key === '+') {
@@ -2734,7 +2603,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Botón para previsualizar documento
     const previewDocumentBtn = document.getElementById('previewDocumentBtn');
     if (previewDocumentBtn) {
         previewDocumentBtn.addEventListener('click', function() {
@@ -2742,7 +2610,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Botón para limpiar todas las firmas
     const clearAllSignatures = document.getElementById('clearAllSignatures');
     if (clearAllSignatures) {
         clearAllSignatures.addEventListener('click', function() {
@@ -2757,7 +2624,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Botón para guardar documento con firmas
     const saveDocumentWithSignatures = document.getElementById('saveDocumentWithSignatures');
     if (saveDocumentWithSignatures) {
         saveDocumentWithSignatures.addEventListener('click', function() {
@@ -2775,7 +2641,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Sistema de archivos - PÁGINA DE ARCHIVOS
     const fileInput = document.getElementById('fileInput');
     const uploadArea = document.getElementById('uploadArea');
     const uploadFileBtn = document.getElementById('uploadFileBtn');
@@ -2800,17 +2665,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     const uploadedFiles = await FileService.uploadFiles(this.files);
                     
-                    // Mostrar vista previa
                     FileService.renderFilePreviews(uploadedFiles);
                     const filePreviewContainer = document.getElementById('filePreviewContainer');
                     if (filePreviewContainer) filePreviewContainer.style.display = 'block';
                     
-                    // Actualizar grid de archivos
                     FileService.renderFilesGrid();
                     
                     showNotification(`${uploadedFiles.length} archivo(s) subido(s) correctamente`);
                     
-                    // Limpiar input para permitir subir más archivos
                     this.value = '';
                 } catch (error) {
                     console.error('Error al subir archivos:', error);
@@ -2820,7 +2682,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // NUEVO: Barra de búsqueda en archivos
     const fileSearchInput = document.getElementById('fileSearchInput');
     if (fileSearchInput) {
         fileSearchInput.addEventListener('input', function(e) {
@@ -2829,7 +2690,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Comentarios
     const addCommentBtn = document.getElementById('addCommentBtn');
     if (addCommentBtn) {
         addCommentBtn.addEventListener('click', function() {
@@ -2873,7 +2733,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Gestión de colaboradores
     const addCollaboratorBtn = document.getElementById('addCollaboratorBtn');
     const closeCollaboratorModal = document.getElementById('closeCollaboratorModal');
     const cancelCollaboratorBtn = document.getElementById('cancelCollaboratorBtn');
@@ -2918,25 +2777,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            CollaborationService.addCollaborator(email, role);
+            showNotification(`Invitación enviada a ${email}`);
             
             const modal = document.getElementById('addCollaboratorModal');
             if (modal) modal.classList.remove('show');
             
             if (emailInput) emailInput.value = '';
             if (roleInput) roleInput.value = 'editor';
-            
-            showNotification(`Invitación enviada a ${email}`);
         });
     }
     
-    // Validación de email
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     }
     
-    // Cerrar modal al hacer clic fuera
     window.addEventListener('click', function(e) {
         const modal = document.getElementById('addCollaboratorModal');
         if (e.target === modal) {
@@ -2949,7 +2804,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Navegación entre páginas
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.id !== 'logoutBtn') {
             link.addEventListener('click', function() {
@@ -2959,6 +2813,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Inicializar timestamp
     updateTimestamp();
 });

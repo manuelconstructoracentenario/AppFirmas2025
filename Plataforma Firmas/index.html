@@ -486,14 +486,35 @@
         </div>
     </div>
 
-    <!-- Agregar las dependencias necesarias -->
+            <!-- Agregar las dependencias necesarias -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- AGREGAR FIREBASE -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <script>
         // Configurar PDF.js worker
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        // CONFIGURACIÓN DE FIREBASE - REEMPLAZA CON TUS DATOS REALES
+        const firebaseConfig = {
+        apiKey: "AIzaSyCMQ28EklfWir09l64bCZvMuwCC_ai_7FU",
+        authDomain: "appfirmas-3a271.firebaseapp.com",
+        projectId: "appfirmas-3a271",
+        storageBucket: "appfirmas-3a271.firebasestorage.app",
+        messagingSenderId: "746181336202",
+        appId: "1:746181336202:web:2ba3be58e5d921066ee173",
+        measurementId: "G-K072W7421L"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
     </script>
+
     <script src="app.js"></script>
 </body>
 </html>
