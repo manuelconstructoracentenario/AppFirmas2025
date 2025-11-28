@@ -221,6 +221,41 @@ class AuthService {
     }
 }
 
+// Sistema de REGISTRO
+const registerBtn = document.getElementById('registerBtn');
+if (registerBtn) {
+    registerBtn.addEventListener('click', async function() {
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        
+        if (!email || !password) {
+            showNotification('Por favor, completa todos los campos', 'error');
+            return;
+        }
+        
+        const name = prompt('Por favor, ingresa tu nombre completo:');
+        if (!name) {
+            showNotification('El nombre es requerido', 'error');
+            return;
+        }
+        
+        try {
+            const result = await AuthService.registerUser(email, password, name);
+            
+            if (result.success) {
+                showNotification(`¡Cuenta creada exitosamente! Bienvenido ${name}`);
+                // Limpiar formulario
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+            } else {
+                showNotification(result.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Error en el registro', 'error');
+        }
+    });
+}
+
 // Sistema de Gestión de Archivos
 class FileService {
     static files = [];
