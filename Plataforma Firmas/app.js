@@ -257,7 +257,7 @@ class AuthService {
                     
                     if (currentUserName) currentUserName.textContent = userData.name;
                     if (userAvatar) userAvatar.textContent = userData.avatar;
-                                        
+                    
                     try {
                         const autoSignature = await SignatureGenerator.createUserSignature(userData);
                         AppState.currentSignature = autoSignature;
@@ -269,10 +269,16 @@ class AuthService {
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('appContainer').classList.add('active');
                     
-                   // CollaborationService.updateOnlineUsers();
+                    // CARGAR ARCHIVOS AL INICIAR SESIÓN
+                    try {
+                        await FileService.loadUserDocuments();
+                        DocumentService.renderDocumentSelector();
+                        FileService.renderFilesGrid();
+                    } catch (error) {
+                        console.error('Error loading files on login:', error);
+                    }
+                    
                     CollaborationService.renderCollaborators();
-                    FileService.renderFilesGrid();
-                    DocumentService.renderDocumentSelector();
                     ActivityService.loadRecentActivities();
                     
                     showNotification(`¡Bienvenido a Cente Docs, ${userData.name}!`);
@@ -280,6 +286,7 @@ class AuthService {
             } else {
                 console.log('No hay usuario autenticado');
                 AppState.currentUser = null;
+                FileService.files = []; // Limpiar archivos al cerrar sesión
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('appContainer').classList.remove('active');
             }
@@ -297,11 +304,14 @@ class FileService {
         
         for (const file of Array.from(files)) {
             try {
+                const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
                 const fileData = {
-                    id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    id: fileId,
                     name: file.name,
                     type: file.type,
                     size: file.size,
+                    // Usar una URL temporal para archivos locales
                     url: URL.createObjectURL(file),
                     uploadDate: new Date(),
                     uploadedBy: AppState.currentUser.uid,
@@ -314,6 +324,9 @@ class FileService {
                 await storage.saveDocument(fileData);
                 uploadedFiles.push(fileData);
                 
+                // Agregar inmediatamente a la lista local
+                this.files.push(fileData);
+                
                 await storage.saveActivity({
                     type: 'file_upload',
                     description: `Subió el archivo: ${file.name}`,
@@ -321,13 +334,17 @@ class FileService {
                     userName: AppState.currentUser.name
                 });
                 
+                showNotification(`Archivo ${file.name} subido correctamente`);
+                
             } catch (error) {
                 console.error('Error uploading file:', error);
                 showNotification(`Error al subir ${file.name}`, 'error');
             }
         }
         
+        // Actualizar ambas vistas
         DocumentService.refreshDocumentSelector();
+        this.renderFilesGrid();
         
         return uploadedFiles;
     }
@@ -335,7 +352,12 @@ class FileService {
     static async loadUserDocuments() {
         try {
             const storage = new CloudStorageService();
-            const documents = await storage.getUserDocuments(AppState.currentUser.uid);
+            // Cambiar para usar getAllDocuments en lugar de getUserDocuments
+            // Esto cargará todos los documentos disponibles
+            const documents = await storage.getAllDocuments();
+            
+            // Filtrar por usuario actual o mostrar todos según sea necesario
+            // Para este caso, mostraremos todos los documentos disponibles
             this.files = documents;
             return documents;
         } catch (error) {
@@ -469,47 +491,77 @@ class FileService {
         
         if (!uploadedFilesGrid || !signedFilesGrid) return;
         
-        await this.loadUserDocuments();
-        const userFiles = this.files;
-        
-        // Separar archivos
-        const uploadedFiles = userFiles.filter(file => file.source === 'uploaded');
-        const signedFiles = userFiles.filter(file => file.source === 'signed');
-        
-        // Renderizar archivos subidos
-        if (uploadedFiles.length === 0) {
-            noUploadedFiles.style.display = 'block';
-            uploadedFilesGrid.innerHTML = '';
-            uploadedFilesGrid.appendChild(noUploadedFiles);
-        } else {
-            noUploadedFiles.style.display = 'none';
-            uploadedFilesGrid.innerHTML = '';
-            uploadedFiles.forEach(file => {
-                const fileCard = this.createFileCard(file, false);
-                uploadedFilesGrid.appendChild(fileCard);
+        try {
+            // Cargar archivos si no están cargados
+            if (this.files.length === 0) {
+                await this.loadUserDocuments();
+            }
+            
+            const userFiles = this.files;
+            
+            // Separar archivos
+            const uploadedFiles = userFiles.filter(file => file.source === 'uploaded');
+            const signedFiles = userFiles.filter(file => file.source === 'signed');
+            
+            // Ordenar archivos firmados por fecha (más reciente primero)
+            signedFiles.sort((a, b) => {
+                const dateA = a.uploadDate?.toDate?.() || a.uploadDate || new Date(0);
+                const dateB = b.uploadDate?.toDate?.() || b.uploadDate || new Date(0);
+                return dateB - dateA;
             });
-        }
-        
-        // Renderizar archivos firmados
-        if (signedFiles.length === 0) {
-            noSignedFiles.style.display = 'block';
-            signedFilesGrid.innerHTML = '';
-            signedFilesGrid.appendChild(noSignedFiles);
-        } else {
-            noSignedFiles.style.display = 'none';
-            signedFilesGrid.innerHTML = '';
-            signedFiles.forEach(file => {
-                const fileCard = this.createFileCard(file, true);
-                signedFilesGrid.appendChild(fileCard);
+            
+            // Ordenar archivos subidos por fecha (más reciente primero)
+            uploadedFiles.sort((a, b) => {
+                const dateA = a.uploadDate?.toDate?.() || a.uploadDate || new Date(0);
+                const dateB = b.uploadDate?.toDate?.() || b.uploadDate || new Date(0);
+                return dateB - dateA;
             });
-        }
-        
-        // Actualizar contadores
-        if (uploadedFilesCount) {
-            uploadedFilesCount.textContent = `${uploadedFiles.length} archivo${uploadedFiles.length !== 1 ? 's' : ''}`;
-        }
-        if (signedFilesCount) {
-            signedFilesCount.textContent = `${signedFiles.length} archivo${signedFiles.length !== 1 ? 's' : ''}`;
+            
+            // Renderizar archivos FIRMADOS primero (cambiar el orden aquí)
+            if (signedFiles.length === 0) {
+                noSignedFiles.style.display = 'block';
+                signedFilesGrid.innerHTML = '';
+                signedFilesGrid.appendChild(noSignedFiles);
+            } else {
+                noSignedFiles.style.display = 'none';
+                signedFilesGrid.innerHTML = '';
+                signedFiles.forEach(file => {
+                    const fileCard = this.createFileCard(file, true);
+                    signedFilesGrid.appendChild(fileCard);
+                });
+            }
+            
+            // Renderizar archivos SUBIDOS después
+            if (uploadedFiles.length === 0) {
+                noUploadedFiles.style.display = 'block';
+                uploadedFilesGrid.innerHTML = '';
+                uploadedFilesGrid.appendChild(noUploadedFiles);
+            } else {
+                noUploadedFiles.style.display = 'none';
+                uploadedFilesGrid.innerHTML = '';
+                uploadedFiles.forEach(file => {
+                    const fileCard = this.createFileCard(file, false);
+                    uploadedFilesGrid.appendChild(fileCard);
+                });
+            }
+            
+            // Actualizar contadores
+            if (uploadedFilesCount) {
+                uploadedFilesCount.textContent = `${uploadedFiles.length} archivo${uploadedFiles.length !== 1 ? 's' : ''}`;
+            }
+            if (signedFilesCount) {
+                signedFilesCount.textContent = `${signedFiles.length} archivo${signedFiles.length !== 1 ? 's' : ''}`;
+            }
+            
+            // Actualizar también el contador general
+            const filesCount = document.getElementById('filesCount');
+            if (filesCount) {
+                filesCount.textContent = `${userFiles.length} archivo${userFiles.length !== 1 ? 's' : ''}`;
+            }
+            
+        } catch (error) {
+            console.error('Error rendering files grid:', error);
+            showNotification('Error al cargar archivos', 'error');
         }
     }
 
@@ -517,19 +569,20 @@ class FileService {
         const fileInfo = this.getFileIcon(file.type, file.name);
         const fileCard = document.createElement('div');
         fileCard.className = 'file-card';
+        fileCard.dataset.fileId = file.id;
         
         let signedBadge = '';
         let signersInfo = '';
-        let actions = '';
         
         if (isSigned) {
             signedBadge = '<div class="signed-badge"><i class="fas fa-signature"></i> Firmado</div>';
             
-            // Mostrar información de firmantes
+            // Mostrar información de firmantes como iconos con tooltip
             if (file.signatures && file.signatures.length > 0) {
                 const uniqueSigners = [];
                 const seenSigners = new Set();
                 
+                // Obtener firmantes únicos
                 file.signatures.forEach(signature => {
                     if (!seenSigners.has(signature.userEmail)) {
                         seenSigners.add(signature.userEmail);
@@ -537,50 +590,57 @@ class FileService {
                     }
                 });
                 
+                // Limitar a 5 firmantes para no saturar
+                const displayedSigners = uniqueSigners.slice(0, 5);
+                const extraCount = uniqueSigners.length - 5;
+                
                 signersInfo = `
                     <div class="signers-list">
-                        <strong>Firmado por:</strong>
-                        <div class="signers">
-                            ${uniqueSigners.map(signer => `
-                                <div class="signer">
-                                    <div class="signer-avatar">${signer.userName.substring(0, 2).toUpperCase()}</div>
-                                    <div class="signer-info">
-                                        <div class="signer-name">${signer.userName}</div>
-                                        <div class="signer-date">${new Date(signer.timestamp).toLocaleDateString('es-ES')}</div>
-                                    </div>
+                        <strong><i class="fas fa-users"></i> Firmado por (${uniqueSigners.length}):</strong>
+                        <div class="signers-icons">
+                            ${displayedSigners.map(signer => `
+                                <div class="signer-icon" data-tooltip="${signer.userName || 'Usuario'}">
+                                    <div class="signer-avatar-small">${signer.userName?.substring(0, 1).toUpperCase() || '?'}</div>
                                 </div>
                             `).join('')}
+                            ${extraCount > 0 ? `
+                                <div class="signer-icon-more" data-tooltip="${extraCount} persona(s) más">
+                                    <div class="signer-avatar-small">+${extraCount}</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="signers-tooltip" id="tooltip-${file.id}" style="display: none;">
+                            <div class="tooltip-content">
+                                ${uniqueSigners.map(signer => `
+                                    <div class="tooltip-signer">
+                                        <div class="tooltip-avatar">${signer.userName?.substring(0, 1).toUpperCase() || '?'}</div>
+                                        <div class="tooltip-name">${signer.userName || 'Usuario'}</div>
+                                        <div class="tooltip-date">${new Date(signer.timestamp?.toDate?.() || signer.timestamp || new Date()).toLocaleDateString('es-ES')}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
                 `;
+            } else {
+                signersInfo = `
+                    <div class="signers-list">
+                        <strong><i class="fas fa-users"></i> Firmado por:</strong>
+                        <div class="no-signers">No hay información de firmantes</div>
+                    </div>
+                `;
             }
-            
-            actions = `
-                <div class="file-actions">
-                    <button class="file-action-btn" onclick="FileService.downloadFile('${file.id}')">
-                        <i class="fas fa-download"></i> Descargar
-                    </button>
-                    <button class="file-action-btn" onclick="FileService.shareFile('${file.id}')">
-                        <i class="fas fa-share"></i> Compartir
-                    </button>
-                </div>
-            `;
-        } else {
-            actions = `
-                <div class="file-actions">
-                    <button class="file-action-btn" onclick="FileService.downloadFile('${file.id}')">
-                        <i class="fas fa-download"></i> Descargar
-                    </button>
-                    <button class="file-action-btn highlight" onclick="FileService.editOrSignFile('${file.id}')">
-                        <i class="fas fa-edit"></i> Editar/Firmar
-                    </button>
-                    <button class="file-action-btn" onclick="FileService.shareFile('${file.id}')">
-                        <i class="fas fa-share"></i> Compartir
-                    </button>
-                </div>
-            `;
         }
         
+        const fileDate = file.uploadDate?.toDate?.() || file.uploadDate || new Date();
+        const formattedDate = fileDate.toLocaleDateString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        
+        // MOSTRAR BOTÓN DE EDITAR/FIRMAR EN AMBOS TIPOS DE ARCHIVOS
+        // (archivos firmados pueden tener más firmas)
         fileCard.innerHTML = `
             <div class="file-icon">
                 <i class="${fileInfo.icon}" style="color: ${fileInfo.color};"></i>
@@ -588,14 +648,50 @@ class FileService {
             ${signedBadge}
             <div class="file-name">${file.name}</div>
             <div class="file-info">
-                <div>${isSigned ? 'Firmado' : 'Subido'}: ${new Date(file.uploadDate?.toDate?.() || file.uploadDate).toLocaleDateString('es-ES')}</div>
-                <div>Tamaño: ${this.formatFileSize(file.size)}</div>
-                <div>Por: ${file.uploadedByName}</div>
-                <div>Tipo: ${this.getFileTypeDisplayName(fileInfo.type)}</div>
+                <div><i class="fas fa-calendar"></i> ${isSigned ? 'Firmado' : 'Subido'}: ${formattedDate}</div>
+                <div><i class="fas fa-weight"></i> Tamaño: ${this.formatFileSize(file.size || 0)}</div>
+                <div><i class="fas fa-user"></i> Por: ${file.uploadedByName || AppState.currentUser?.name || 'Usuario'}</div>
+                <div><i class="fas fa-file"></i> Tipo: ${this.getFileTypeDisplayName(fileInfo.type)}</div>
                 ${signersInfo}
             </div>
-            ${actions}
+            <div class="file-actions">
+                <button class="file-action-btn download-btn" onclick="FileService.downloadFile('${file.id}')" title="Descargar">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <!-- SIEMPRE MOSTRAR BOTÓN DE EDITAR/FIRMAR -->
+                <button class="file-action-btn highlight sign-btn" onclick="FileService.editOrSignFile('${file.id}')" title="${isSigned ? 'Agregar más firmas' : 'Editar/Firmar'}">
+                    <i class="fas fa-edit"></i> ${isSigned ? 'Agregar firma' : 'Editar/Firmar'}
+                </button>
+                <button class="file-action-btn share-btn" onclick="FileService.shareFile('${file.id}')" title="Compartir">
+                    <i class="fas fa-share"></i> Compartir
+                </button>
+            </div>
         `;
+        
+        // Agregar eventos para los tooltips
+        setTimeout(() => {
+            const signerIcons = fileCard.querySelectorAll('.signer-icon, .signer-icon-more');
+            const tooltip = fileCard.querySelector(`.signers-tooltip`);
+            
+            signerIcons.forEach(icon => {
+                icon.addEventListener('mouseenter', function(e) {
+                    if (tooltip) {
+                        tooltip.style.display = 'block';
+                        tooltip.style.position = 'absolute';
+                        tooltip.style.zIndex = '1000';
+                        tooltip.style.left = `${e.clientX + 10}px`;
+                        tooltip.style.top = `${e.clientY + 10}px`;
+                    }
+                });
+                
+                icon.addEventListener('mouseleave', function() {
+                    if (tooltip) {
+                        tooltip.style.display = 'none';
+                    }
+                });
+            });
+        }, 100);
+        
         return fileCard;
     }
 
@@ -1727,32 +1823,53 @@ class DocumentService {
 
     static renderDocumentSelector() {
         const selector = document.getElementById('documentSelector');
-        if (!selector || !FileService) return;
+        if (!selector) return;
 
         selector.innerHTML = '<option value="">Seleccionar documento...</option>';
         
-        // Mostrar todos los archivos subidos (no firmados)
-        const uploadedFiles = FileService.files.filter(file => file.source === 'uploaded');
+        if (!FileService || !FileService.files) {
+            console.error('FileService.files no está disponible');
+            return;
+        }
         
-        const sortedFiles = [...uploadedFiles].sort((a, b) => 
-            new Date(b.uploadDate) - new Date(a.uploadDate)
-        );
+        // Mostrar TODOS los archivos (tanto subidos como firmados)
+        const allFiles = FileService.files;
+        
+        // Ordenar por fecha (más reciente primero)
+        const sortedFiles = [...allFiles].sort((a, b) => {
+            const dateA = a.uploadDate?.toDate?.() || a.uploadDate || new Date(0);
+            const dateB = b.uploadDate?.toDate?.() || b.uploadDate || new Date(0);
+            return dateB - dateA;
+        });
+        
+        console.log('Archivos disponibles para selector:', sortedFiles.length);
         
         sortedFiles.forEach(file => {
             const fileInfo = FileService.getFileIcon(file.type, file.name);
             const option = document.createElement('option');
             option.value = file.id;
-            option.textContent = `${file.name} (${FileService.getFileTypeDisplayName(fileInfo.type)})`;
+            
+            // Marcar archivos firmados con un indicador
+            const signedIndicator = file.source === 'signed' ? ' [Firmado]' : '';
+            option.textContent = `${file.name} (${FileService.getFileTypeDisplayName(fileInfo.type)})${signedIndicator}`;
+            
             if (this.currentDocument && this.currentDocument.id === file.id) {
                 option.selected = true;
             }
             selector.appendChild(option);
         });
         
+        // Auto-seleccionar el primer archivo si no hay ninguno seleccionado
         if (sortedFiles.length > 0 && (!this.currentDocument || selector.value === "")) {
             selector.value = sortedFiles[0].id;
-            const event = new Event('change');
-            selector.dispatchEvent(event);
+            // Cargar automáticamente el primer documento
+            const file = sortedFiles[0];
+            setTimeout(() => {
+                console.log('Cargando documento automáticamente:', file.name);
+                this.loadDocument(file);
+            }, 100);
+        } else if (sortedFiles.length === 0) {
+            console.log('No hay archivos para mostrar en el selector');
         }
     }
 
@@ -2618,19 +2735,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Para el botón de subir documento en la página de documentos
     const uploadDocumentBtn = document.getElementById('uploadDocumentBtn');
     const documentFileInput = document.createElement('input');
     documentFileInput.type = 'file';
     documentFileInput.style.display = 'none';
     documentFileInput.accept = '.pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar';
+    documentFileInput.multiple = false; // Para documentos, solo uno a la vez
     document.body.appendChild(documentFileInput);
-    
+
     if (uploadDocumentBtn) {
         uploadDocumentBtn.addEventListener('click', function() {
             documentFileInput.click();
         });
     }
-    
+
     documentFileInput.addEventListener('change', async function() {
         if (this.files.length > 0) {
             try {
@@ -2639,20 +2758,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const uploadedFiles = await FileService.uploadFiles(this.files);
                 
                 if (uploadedFiles.length > 0) {
+                    // Cargar el primer documento automáticamente
                     await DocumentService.loadDocument(uploadedFiles[0]);
-                    showNotification(`Documento subido correctamente`);
+                    showNotification(`Documento subido y cargado correctamente`);
                 }
                 
+                // Actualizar el selector de documentos
+                DocumentService.renderDocumentSelector();
+                
+                // Actualizar la página de archivos si está visible
                 if (document.getElementById('files-page') && 
                     document.getElementById('files-page').classList.contains('active')) {
-                    FileService.renderFilesGrid();
+                    await FileService.renderFilesGrid();
                 }
                 
                 this.value = '';
                 
             } catch (error) {
                 console.error('Error al subir documento:', error);
-                showNotification('Error al subir documento', 'error');
+                showNotification('Error al subir documento: ' + error.message, 'error');
             }
         }
     });
@@ -2932,6 +3056,35 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+
+    const checkAuthState = setInterval(() => {
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser) {
+            clearInterval(checkAuthState);
+            console.log('Usuario ya logueado, cargando archivos...');
+            
+            // Cargar archivos después de 1 segundo para asegurar que todo esté listo
+            setTimeout(async () => {
+                try {
+                    await FileService.loadUserDocuments();
+                    DocumentService.renderDocumentSelector();
+                    
+                    // Si estamos en la página de archivos, renderizar la cuadrícula
+                    if (document.getElementById('files-page') && 
+                        document.getElementById('files-page').classList.contains('active')) {
+                        FileService.renderFilesGrid();
+                    }
+                } catch (error) {
+                    console.error('Error al cargar archivos:', error);
+                }
+            }, 1000);
+        }
+    }, 500); // Verificar cada 500ms
+    
+    // Limpiar el intervalo después de 5 segundos si no hay usuario
+    setTimeout(() => {
+        clearInterval(checkAuthState);
+    }, 5000);
     
     updateTimestamp();
 });

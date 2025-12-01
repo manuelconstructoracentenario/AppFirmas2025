@@ -3251,3 +3251,399 @@ canvas {
         padding: 6px;
     }
 }
+
+/* Estilos para las secciones de archivos */
+.files-section {
+    margin-top: 30px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #e1e5e9;
+}
+
+.files-section:first-child {
+    margin-top: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f7f0;
+}
+
+.section-header h3 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--primary);
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-header span {
+    background: #f0f7f0;
+    color: var(--primary);
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* Estilos para la lista de firmantes */
+.signers-list {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5e9;
+}
+
+.signers-list strong {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.signers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+.signer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary);
+}
+
+.signer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.signer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.signer-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.signer-date {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+.no-signers {
+    color: var(--gray);
+    font-style: italic;
+    font-size: 13px;
+    text-align: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+/* Mejorar el grid de archivos */
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.file-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    border: 1px solid #e1e5e9;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
+}
+
+.file-icon {
+    font-size: 36px;
+    color: var(--primary);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.file-name {
+    font-weight: 600;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 16px;
+    color: var(--dark);
+}
+
+.file-info {
+    color: var(--gray);
+    font-size: 14px;
+    margin-bottom: 15px;
+    flex: 1;
+}
+
+.file-info div {
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.file-info i {
+    width: 16px;
+    text-align: center;
+    color: var(--primary);
+}
+
+/* Badge de firmado mejorado */
+.signed-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--success);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 2;
+}
+
+/* Botones de acción */
+.file-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.file-action-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: all 0.3s;
+    flex: 1;
+    justify-content: center;
+    min-width: 120px;
+    border: 1px solid #e1e5e9;
+    gap: 5px;
+}
+
+.file-action-btn:hover {
+    background: rgba(47, 108, 70, 0.1);
+    transform: translateY(-1px);
+    border-color: var(--primary);
+}
+
+.file-action-btn.highlight {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.file-action-btn.highlight:hover {
+    background: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(47, 108, 70, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .files-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .signer {
+        padding: 6px;
+    }
+    
+    .file-action-btn {
+        min-width: 100%;
+        margin-bottom: 5px;
+    }
+}
+
+/* Mejoras para el scroll de firmantes */
+.signers::-webkit-scrollbar {
+    width: 6px;
+}
+
+.signers::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.signers::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.signers::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Estilos para iconos de firmantes con tooltip */
+.signers-icons {
+    display: flex;
+    gap: 5px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+.signer-icon, .signer-icon-more {
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.signer-icon:hover, .signer-icon-more:hover {
+    transform: scale(1.1);
+}
+
+.signer-avatar-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.signer-icon-more .signer-avatar-small {
+    background: var(--gray);
+}
+
+/* Tooltip para firmantes */
+.signers-tooltip {
+    position: fixed;
+    background: white;
+    border: 1px solid #e1e5e9;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    max-width: 250px;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.tooltip-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tooltip-signer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tooltip-signer:last-child {
+    border-bottom: none;
+}
+
+.tooltip-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 10px;
+    flex-shrink: 0;
+}
+
+.tooltip-name {
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--dark);
+    flex: 1;
+}
+
+.tooltip-date {
+    font-size: 10px;
+    color: var(--gray);
+    white-space: nowrap;
+}
+
+/* Ajustes para el scroll del tooltip */
+.signers-tooltip::-webkit-scrollbar {
+    width: 4px;
+}
+
+.signers-tooltip::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.signers-tooltip::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.signers-tooltip::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
