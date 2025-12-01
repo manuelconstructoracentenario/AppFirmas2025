@@ -96,12 +96,7 @@
                 </li>
             </ul>
             
-            <div class="online-users">
-                <h3><i class="fas fa-circle"></i> Usuarios Conectados</h3>
-                <ul class="user-list" id="usersList">
-                    <!-- Los usuarios se cargarán dinámicamente -->
-                </ul>
-            </div>
+            <!-- Eliminada la sección de usuarios conectados -->
         </div>
         
         <!-- Main Content -->
@@ -164,7 +159,7 @@
                         </div>
                         
                         <div class="status-bar">
-                            <div id="connectionStatus"><i class="fas fa-circle" style="color: #96c77a;"></i> Conectado: <span id="connectedUsers">3 usuarios</span></div>
+                            <div id="connectionStatus"><i class="fas fa-circle" style="color: #96c77a;"></i> Conectado</div>
                             <div id="lastUpdate">Última actualización: <span id="updateTime">Nunca</span></div>
                         </div>
                     </div>
@@ -259,7 +254,7 @@
                                     <i class="fas fa-trash"></i> Limpiar
                                 </button>
                                 <button class="btn btn-primary btn-sm" id="saveDocumentWithSignatures">
-                                    <i class="fas fa-save"></i> Guardar
+                                    <i class="fas fa-save"></i> Guardar Documento
                                 </button>
                             </div>
                         </div>
@@ -305,12 +300,11 @@
                         <div id="filesCount">0 archivos</div>
                     </div>
                     
-                    <!-- BARRA DE BÚSQUEDA AGREGADA -->
-                    <div class="search-container" style="padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #e1e5e9;">
-                        <div class="search-box" style="position: relative;">
-                            <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #6c8789;"></i>
-                            <input type="text" id="fileSearchInput" placeholder="Buscar archivos por nombre..." 
-                                   style="width: 100%; padding: 12px 15px 12px 45px; border: 1px solid #e1e5e9; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.3s;">
+                    <!-- BARRA DE BÚSQUEDA -->
+                    <div class="search-container">
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="fileSearchInput" placeholder="Buscar archivos por nombre...">
                         </div>
                     </div>
                     
@@ -320,15 +314,8 @@
                                 <i class="fas fa-cloud-upload-alt"></i>
                             </div>
                             <h3 class="upload-text">Arrastra archivos aquí o haz clic para subir</h3>
-                            <button class="btn btn-outline">Seleccionar Archivos</button>
+                            <button class="btn btn-outline" id="selectFilesBtn">Seleccionar Archivos</button>
                             <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
-                        </div>
-                        
-                        <div class="file-preview-container" id="filePreviewContainer" style="display: none;">
-                            <h3>Vista Previa de Archivos</h3>
-                            <div class="file-previews" id="filePreviews">
-                                <!-- Las vistas previas se insertarán aquí -->
-                            </div>
                         </div>
                         
                         <div class="files-grid" id="filesGrid">
@@ -475,7 +462,7 @@
             <div id="previewContent">
                 <!-- El contenido de previsualización se cargará aquí -->
             </div>
-            <div class="preview-actions" style="padding: 20px; text-align: center; border-top: 1px solid #e1e5e9;">
+            <div class="preview-actions">
                 <button class="btn btn-primary" id="downloadPreviewBtn">
                     <i class="fas fa-download"></i> Descargar Documento
                 </button>
@@ -512,7 +499,15 @@
         };
 
         // Inicializar Firebase
-        firebase.initializeApp(firebaseConfig);
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            console.log('Firebase inicializado correctamente');
+        } catch (error) {
+            console.error('Error inicializando Firebase:', error);
+            window.firebaseError = true;
+        }
     </script>
 
     <script src="app.js"></script>

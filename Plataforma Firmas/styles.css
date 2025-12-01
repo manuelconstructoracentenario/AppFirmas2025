@@ -53,10 +53,10 @@ body {
 }
 
 .logo-image-small {
-    width: 45px;
-    height: 45px;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
-    border-radius: 12px;
+    border-radius: 8px;
 }
 
 .login-logo {
@@ -68,19 +68,39 @@ body {
 
 .logo-icon {
     background: rgba(255, 255, 255, 0.2);
-    width: 45px;
-    height: 45px;
-    border-radius: 12px;
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 12px;
+    margin-right: 0;
+    margin-bottom: 12px;
+    padding: 8px;
 }
 
 .logo-icon img {
     width: 35px;
     height: 35px;
     object-fit: contain;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
 }
 
 .login-form {
@@ -146,19 +166,6 @@ body {
     transition: all 0.3s ease;
 }
 
-.logo {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.logo h1 {
-    font-size: 22px;
-    font-weight: 700;
-}
-
 .user-info {
     display: flex;
     align-items: center;
@@ -173,14 +180,16 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: var(--accent);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
     font-weight: bold;
-    font-size: 20px;
+    font-size: 16px;
     color: white;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .user-role-badge {
@@ -222,63 +231,6 @@ body {
     font-size: 20px;
     width: 24px;
     text-align: center;
-}
-
-.online-users {
-    margin-top: auto;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
-    border-radius: 12px;
-    backdrop-filter: blur(10px);
-}
-
-.online-users h3 {
-    margin-bottom: 15px;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-}
-
-.online-users h3 i {
-    margin-right: 8px;
-}
-
-.user-list {
-    list-style: none;
-}
-
-.user-item {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.user-status {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--success);
-    margin-right: 12px;
-    position: relative;
-}
-
-.user-status::after {
-    content: '';
-    position: absolute;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--success);
-    opacity: 0.4;
-    top: -2px;
-    left: -2px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 0.4; }
-    50% { transform: scale(1.2); opacity: 0.2; }
-    100% { transform: scale(1); opacity: 0.4; }
 }
 
 /* Main Content */
@@ -440,7 +392,7 @@ body {
     color: white;
     font-size: 16px;
     font-weight: 600;
-    min-width: 300px;
+    min-width: 400px;
     cursor: pointer;
     flex: 1;
     transition: all 0.3s ease;
@@ -756,7 +708,7 @@ body {
     padding: 10px;
     margin-bottom: 15px;
     text-align: center;
-    min-height: 100px;
+    min-height: 130px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -767,7 +719,7 @@ body {
     border: 1px solid #e1e5e9;
     border-radius: 6px;
     padding: 15px;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .signature-info-auto p {
@@ -854,7 +806,7 @@ body {
     border-radius: 6px;
     display: none;
     margin: 0 auto;
-    max-height: 80px;
+    max-height: 110px;
     object-fit: contain;
     background: transparent !important;
 }
@@ -1099,96 +1051,6 @@ body {
     display: none;
 }
 
-.file-preview-container {
-    margin-bottom: 30px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 2px dashed #96c77a;
-}
-
-.file-previews {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 15px;
-}
-
-.file-preview-item {
-    background: white;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    border: 1px solid #e1e5e9;
-    transition: all 0.3s;
-}
-
-.file-preview-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.image-preview {
-    max-width: 100%;
-    max-height: 150px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    object-fit: contain;
-}
-
-.pdf-preview {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-    text-align: center;
-}
-
-.document-preview {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    text-align: center;
-    border-left: 4px solid;
-    transition: all 0.3s ease;
-}
-
-.file-preview-name {
-    font-weight: 600;
-    margin-bottom: 5px;
-    word-break: break-word;
-    font-size: 14px;
-}
-
-.file-preview-size {
-    font-size: 12px;
-    color: #6c8789;
-    margin-bottom: 10px;
-}
-
-.file-preview-actions {
-    display: flex;
-    gap: 5px;
-    justify-content: center;
-}
-
-.file-preview-btn {
-    background: none;
-    border: none;
-    padding: 5px;
-    cursor: pointer;
-    color: #6c8789;
-    transition: color 0.3s;
-    border-radius: 4px;
-}
-
-.file-preview-btn:hover {
-    color: #2f6c46;
-    background: rgba(47, 108, 70, 0.1);
-}
-
 .files-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -1204,15 +1066,18 @@ body {
     border: 1px solid #e1e5e9;
     display: flex;
     flex-direction: column;
+    position: relative;
 }
 
 .file-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    border-color: var(--primary);
 }
 
 .file-icon {
-    font-size: 36px;
+    position: relative;
+    font-size: 42px;
     color: var(--primary);
     margin-bottom: 15px;
     text-align: center;
@@ -1220,35 +1085,45 @@ body {
 
 .file-name {
     font-weight: 600;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 16px;
+    line-height: 1.3;
 }
 
 .file-info {
     color: var(--gray);
-    font-size: 14px;
+    font-size: 13px;
     margin-bottom: 15px;
     flex: 1;
 }
 
 .file-info div {
     margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.file-info i {
+    width: 14px;
+    text-align: center;
 }
 
 .file-actions {
     display: flex;
-    gap: 10px;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .file-action-btn {
     background: none;
-    border: none;
+    border: 1px solid #e1e5e9;
     color: var(--primary);
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     display: flex;
     align-items: center;
     padding: 8px 12px;
@@ -1256,15 +1131,26 @@ body {
     transition: all 0.3s;
     flex: 1;
     justify-content: center;
+    min-width: 100px;
+    text-decoration: none;
 }
 
 .file-action-btn:hover {
     background: rgba(47, 108, 70, 0.1);
     transform: translateY(-1px);
+    border-color: var(--primary);
 }
 
-.file-action-btn i {
-    margin-right: 5px;
+.file-action-btn.highlight {
+    background: var(--primary);
+    color: white;
+    border: none;
+}
+
+.file-action-btn.highlight:hover {
+    background: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(47, 108, 70, 0.3);
 }
 
 .no-files {
@@ -1940,10 +1826,6 @@ body {
         gap: 15px;
     }
     
-    .file-previews {
-        grid-template-columns: 1fr;
-    }
-    
     .files-grid {
         grid-template-columns: 1fr;
     }
@@ -2190,8 +2072,8 @@ body {
     z-index: 10;
     pointer-events: all;
     transition: all 0.3s;
-    min-width: 100px;
-    min-height: 50px;
+    min-width: 130px;
+    min-height: 70px;
 }
 
 .document-signature img {
@@ -2451,23 +2333,6 @@ body {
     animation: none;
 }
 
-/* Estilo para el mensaje de "solo tú" */
-.user-item:only-child {
-    justify-content: center;
-    text-align: center;
-}
-
-/* Responsive para la lista de usuarios */
-@media (max-width: 768px) {
-    .online-users {
-        margin-top: 20px;
-    }
-    
-    .user-item {
-        padding: 6px 8px;
-    }
-}
-
 /* SISTEMA DE ZOOM MEJORADO */
 .document-container {
     position: relative;
@@ -2581,7 +2446,7 @@ canvas {
 
 /* Mejorar el tamaño de la previsualización de firma automática */
 .auto-signature-preview {
-    min-height: 130px !important; /* Aumentado de 120px a 130px */
+    min-height: 130px !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2593,28 +2458,28 @@ canvas {
 
 .auto-signature-preview img {
     max-width: 100% !important;
-    max-height: 110px !important; /* Aumentado de 100px a 110px */
+    max-height: 110px !important;
     border-radius: 4px;
     background: white !important;
 }
 
 /* Aumentar el tamaño de las firmas en el documento */
 .document-signature {
-    min-width: 130px !important; /* Aumentado de 120px a 130px */
-    min-height: 70px !important; /* Aumentado de 60px a 70px */
+    min-width: 130px !important;
+    min-height: 70px !important;
 }
 
 .signature-img {
-    max-height: 110px !important; /* Aumentado de 100px a 110px */
+    max-height: 110px !important;
 }
 
 /* Mejorar la información de la firma automática */
 .signature-info-auto {
-    font-size: 13px !important; /* Un poco más grande */
+    font-size: 13px !important;
 }
 
 .signature-info-auto ul {
-    font-size: 12px !important; /* Un poco más grande */
+    font-size: 12px !important;
 }
 
 /* Estilos para el botón de registro */
@@ -2642,6 +2507,12 @@ canvas {
 .search-container {
     background: #f8f9fa;
     border-bottom: 1px solid #e1e5e9;
+}
+
+.search-box {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .search-box input {
@@ -2688,8 +2559,9 @@ canvas {
     transition: all 0.3s;
     flex: 1;
     justify-content: center;
-    min-width: 120px;
+    min-width: 100px;
     border: 1px solid #e1e5e9;
+    text-decoration: none;
 }
 
 .file-action-btn:hover {
@@ -2737,7 +2609,7 @@ canvas {
     }
     
     .search-box input {
-        font-size: 16px; /* Evitar zoom en iOS */
+        font-size: 16px;
     }
     
     .collaborator-item {
@@ -2839,7 +2711,7 @@ canvas {
     color: white;
     font-size: 16px;
     font-weight: 600;
-    min-width: 300px;
+    min-width: 400px;
     cursor: pointer;
     flex: 1;
     transition: all 0.3s ease;
@@ -3088,4 +2960,92 @@ canvas {
 .user-item:only-child div {
     color: rgba(255, 255, 255, 0.7);
     font-size: 14px;
+}
+
+/* ===== MEJORAS PARA PÁGINA DE ARCHIVOS ===== */
+
+.files-section-header {
+    grid-column: 1 / -1;
+    margin: 30px 0 15px 0;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--primary);
+}
+
+.files-section-header h4 {
+    color: var(--primary);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+}
+
+.files-section-header h4 i {
+    font-size: 16px;
+}
+
+/* Badges de estado mejorados */
+.file-status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.file-status-badge.signed {
+    background: var(--success);
+    color: white;
+}
+
+.file-status-badge.uploaded {
+    background: var(--warning);
+    color: white;
+}
+
+/* Mejoras en el contador de archivos */
+#filesCount {
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+/* Botón para seleccionar archivos */
+#selectFilesBtn {
+    margin-top: 10px;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .logo-icon {
+        width: 60px;
+        height: 60px;
+    }
+    
+    .logo h1 {
+        font-size: 20px;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .document-selector {
+        min-width: 200px;
+        font-size: 14px;
+    }
+    
+    .files-section-header h4 {
+        font-size: 16px;
+    }
 }
