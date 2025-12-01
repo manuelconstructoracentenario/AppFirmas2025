@@ -53,10 +53,10 @@ body {
 }
 
 .logo-image-small {
-    width: 100%;
-    height: 100%;
+    width: 45px;
+    height: 45px;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: 12px;
 }
 
 .login-logo {
@@ -68,39 +68,19 @@ body {
 
 .logo-icon {
     background: rgba(255, 255, 255, 0.2);
-    width: 80px;
-    height: 80px;
-    border-radius: 16px;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-right: 0;
-    margin-bottom: 12px;
-    padding: 8px;
+    margin-right: 12px;
 }
 
 .logo-icon img {
     width: 35px;
     height: 35px;
     object-fit: contain;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-}
-
-.logo h1 {
-    font-size: 24px;
-    font-weight: 700;
-    text-align: center;
-    margin: 0;
 }
 
 .login-form {
@@ -166,6 +146,19 @@ body {
     transition: all 0.3s ease;
 }
 
+.logo {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.logo h1 {
+    font-size: 22px;
+    font-weight: 700;
+}
+
 .user-info {
     display: flex;
     align-items: center;
@@ -180,16 +173,14 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--secondary) 100%);
+    background: var(--accent);
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
     font-weight: bold;
-    font-size: 16px;
+    font-size: 20px;
     color: white;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .user-role-badge {
@@ -231,6 +222,63 @@ body {
     font-size: 20px;
     width: 24px;
     text-align: center;
+}
+
+.online-users {
+    margin-top: auto;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.online-users h3 {
+    margin-bottom: 15px;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.online-users h3 i {
+    margin-right: 8px;
+}
+
+.user-list {
+    list-style: none;
+}
+
+.user-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.user-status {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--success);
+    margin-right: 12px;
+    position: relative;
+}
+
+.user-status::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--success);
+    opacity: 0.4;
+    top: -2px;
+    left: -2px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.2); opacity: 0.2; }
+    100% { transform: scale(1); opacity: 0.4; }
 }
 
 /* Main Content */
@@ -392,7 +440,7 @@ body {
     color: white;
     font-size: 16px;
     font-weight: 600;
-    min-width: 400px;
+    min-width: 300px;
     cursor: pointer;
     flex: 1;
     transition: all 0.3s ease;
@@ -708,7 +756,7 @@ body {
     padding: 10px;
     margin-bottom: 15px;
     text-align: center;
-    min-height: 130px;
+    min-height: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -719,7 +767,7 @@ body {
     border: 1px solid #e1e5e9;
     border-radius: 6px;
     padding: 15px;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .signature-info-auto p {
@@ -806,7 +854,7 @@ body {
     border-radius: 6px;
     display: none;
     margin: 0 auto;
-    max-height: 110px;
+    max-height: 80px;
     object-fit: contain;
     background: transparent !important;
 }
@@ -1051,6 +1099,96 @@ body {
     display: none;
 }
 
+.file-preview-container {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 2px dashed #96c77a;
+}
+
+.file-previews {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.file-preview-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 1px solid #e1e5e9;
+    transition: all 0.3s;
+}
+
+.file-preview-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.image-preview {
+    max-width: 100%;
+    max-height: 150px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    object-fit: contain;
+}
+
+.pdf-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.document-preview {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    text-align: center;
+    border-left: 4px solid;
+    transition: all 0.3s ease;
+}
+
+.file-preview-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    word-break: break-word;
+    font-size: 14px;
+}
+
+.file-preview-size {
+    font-size: 12px;
+    color: #6c8789;
+    margin-bottom: 10px;
+}
+
+.file-preview-actions {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.file-preview-btn {
+    background: none;
+    border: none;
+    padding: 5px;
+    cursor: pointer;
+    color: #6c8789;
+    transition: color 0.3s;
+    border-radius: 4px;
+}
+
+.file-preview-btn:hover {
+    color: #2f6c46;
+    background: rgba(47, 108, 70, 0.1);
+}
+
 .files-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -1066,18 +1204,15 @@ body {
     border: 1px solid #e1e5e9;
     display: flex;
     flex-direction: column;
-    position: relative;
 }
 
 .file-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border-color: var(--primary);
 }
 
 .file-icon {
-    position: relative;
-    font-size: 42px;
+    font-size: 36px;
     color: var(--primary);
     margin-bottom: 15px;
     text-align: center;
@@ -1085,45 +1220,35 @@ body {
 
 .file-name {
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     font-size: 16px;
-    line-height: 1.3;
 }
 
 .file-info {
     color: var(--gray);
-    font-size: 13px;
+    font-size: 14px;
     margin-bottom: 15px;
     flex: 1;
 }
 
 .file-info div {
     margin-bottom: 4px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.file-info i {
-    width: 14px;
-    text-align: center;
 }
 
 .file-actions {
     display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .file-action-btn {
     background: none;
-    border: 1px solid #e1e5e9;
+    border: none;
     color: var(--primary);
     cursor: pointer;
-    font-size: 13px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     padding: 8px 12px;
@@ -1131,26 +1256,15 @@ body {
     transition: all 0.3s;
     flex: 1;
     justify-content: center;
-    min-width: 100px;
-    text-decoration: none;
 }
 
 .file-action-btn:hover {
     background: rgba(47, 108, 70, 0.1);
     transform: translateY(-1px);
-    border-color: var(--primary);
 }
 
-.file-action-btn.highlight {
-    background: var(--primary);
-    color: white;
-    border: none;
-}
-
-.file-action-btn.highlight:hover {
-    background: var(--secondary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(47, 108, 70, 0.3);
+.file-action-btn i {
+    margin-right: 5px;
 }
 
 .no-files {
@@ -1826,6 +1940,10 @@ body {
         gap: 15px;
     }
     
+    .file-previews {
+        grid-template-columns: 1fr;
+    }
+    
     .files-grid {
         grid-template-columns: 1fr;
     }
@@ -2072,8 +2190,8 @@ body {
     z-index: 10;
     pointer-events: all;
     transition: all 0.3s;
-    min-width: 130px;
-    min-height: 70px;
+    min-width: 100px;
+    min-height: 50px;
 }
 
 .document-signature img {
@@ -2333,6 +2451,23 @@ body {
     animation: none;
 }
 
+/* Estilo para el mensaje de "solo tú" */
+.user-item:only-child {
+    justify-content: center;
+    text-align: center;
+}
+
+/* Responsive para la lista de usuarios */
+@media (max-width: 768px) {
+    .online-users {
+        margin-top: 20px;
+    }
+    
+    .user-item {
+        padding: 6px 8px;
+    }
+}
+
 /* SISTEMA DE ZOOM MEJORADO */
 .document-container {
     position: relative;
@@ -2446,7 +2581,7 @@ canvas {
 
 /* Mejorar el tamaño de la previsualización de firma automática */
 .auto-signature-preview {
-    min-height: 130px !important;
+    min-height: 130px !important; /* Aumentado de 120px a 130px */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2458,28 +2593,28 @@ canvas {
 
 .auto-signature-preview img {
     max-width: 100% !important;
-    max-height: 110px !important;
+    max-height: 110px !important; /* Aumentado de 100px a 110px */
     border-radius: 4px;
     background: white !important;
 }
 
 /* Aumentar el tamaño de las firmas en el documento */
 .document-signature {
-    min-width: 130px !important;
-    min-height: 70px !important;
+    min-width: 130px !important; /* Aumentado de 120px a 130px */
+    min-height: 70px !important; /* Aumentado de 60px a 70px */
 }
 
 .signature-img {
-    max-height: 110px !important;
+    max-height: 110px !important; /* Aumentado de 100px a 110px */
 }
 
 /* Mejorar la información de la firma automática */
 .signature-info-auto {
-    font-size: 13px !important;
+    font-size: 13px !important; /* Un poco más grande */
 }
 
 .signature-info-auto ul {
-    font-size: 12px !important;
+    font-size: 12px !important; /* Un poco más grande */
 }
 
 /* Estilos para el botón de registro */
@@ -2507,12 +2642,6 @@ canvas {
 .search-container {
     background: #f8f9fa;
     border-bottom: 1px solid #e1e5e9;
-}
-
-.search-box {
-    position: relative;
-    max-width: 500px;
-    margin: 0 auto;
 }
 
 .search-box input {
@@ -2559,9 +2688,8 @@ canvas {
     transition: all 0.3s;
     flex: 1;
     justify-content: center;
-    min-width: 100px;
+    min-width: 120px;
     border: 1px solid #e1e5e9;
-    text-decoration: none;
 }
 
 .file-action-btn:hover {
@@ -2609,7 +2737,7 @@ canvas {
     }
     
     .search-box input {
-        font-size: 16px;
+        font-size: 16px; /* Evitar zoom en iOS */
     }
     
     .collaborator-item {
@@ -2711,7 +2839,7 @@ canvas {
     color: white;
     font-size: 16px;
     font-weight: 600;
-    min-width: 400px;
+    min-width: 300px;
     cursor: pointer;
     flex: 1;
     transition: all 0.3s ease;
@@ -2962,186 +3090,164 @@ canvas {
     font-size: 14px;
 }
 
-/* ===== MEJORAS PARA PÁGINA DE ARCHIVOS ===== */
-
-.files-section-header {
-    grid-column: 1 / -1;
-    margin: 30px 0 15px 0;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--primary);
+/* Estilos para las secciones separadas de archivos */
+.files-section {
+    margin-top: 30px;
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
 }
 
-.files-section-header h4 {
-    color: var(--primary);
-    font-size: 18px;
+.files-section:first-child {
+    margin-top: 0;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #f0f7f0;
+}
+
+.section-header h3 {
     display: flex;
     align-items: center;
     gap: 10px;
+    color: var(--primary);
     margin: 0;
+    font-size: 18px;
 }
 
-.files-section-header h4 i {
-    font-size: 16px;
-}
-
-/* Badges de estado mejorados */
-.file-status-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    padding: 6px 12px;
-    border-radius: 15px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.file-status-badge.signed {
-    background: var(--success);
-    color: white;
-}
-
-.file-status-badge.uploaded {
-    background: var(--warning);
-    color: white;
-}
-
-/* Mejoras en el contador de archivos */
-#filesCount {
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 4px 8px;
-    border-radius: 6px;
+.section-header span {
+    background: #f0f7f0;
+    color: var(--primary);
+    padding: 5px 15px;
+    border-radius: 20px;
     font-size: 14px;
+    font-weight: 600;
 }
 
-/* Botón para seleccionar archivos */
-#selectFilesBtn {
+/* Estilos para la lista de firmantes */
+.signers-list {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e5e9;
+}
+
+.signers {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     margin-top: 10px;
 }
 
-/* Responsive para móviles */
-@media (max-width: 768px) {
-    .logo-icon {
-        width: 60px;
-        height: 60px;
-    }
-    
-    .logo h1 {
-        font-size: 20px;
-    }
-    
-    .user-avatar {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-    }
-    
-    .document-selector {
-        min-width: 200px;
-        font-size: 14px;
-    }
-    
-    .files-section-header h4 {
-        font-size: 16px;
-    }
+.signer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
 }
 
-/* ===== ESTILOS PARA VISTA PREVIA DE IMÁGENES EN ARCHIVOS ===== */
-
-.file-preview-image {
-    width: 100%;
-    height: 120px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #f8f9fa;
+.signer-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-}
-
-.file-preview-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.file-card:hover .file-preview-image img {
-    transform: scale(1.05);
-}
-
-/* Asegurar que el icono del archivo se vea bien */
-.file-icon {
-    position: relative;
-    margin-bottom: 15px;
-    text-align: center;
-}
-
-.file-icon i {
-    transition: transform 0.3s ease;
-}
-
-.file-card:hover .file-icon i {
-    transform: scale(1.1);
-}
-
-/* Estilos para vista previa de PDF */
-.file-preview.pdf-preview {
-    text-align: center;
-    padding: 15px;
-    background: #f8e8e8;
-    border-radius: 8px;
-    margin-bottom: 15px;
-}
-
-.file-preview.pdf-preview i {
-    font-size: 48px;
-    color: #e74c3c;
-    margin-bottom: 8px;
-}
-
-.file-preview.pdf-preview .file-extension {
+    font-weight: bold;
     font-size: 12px;
-    color: #6c8789;
-    margin-top: 5px;
+    flex-shrink: 0;
 }
 
-/* Mejorar la visualización del contenido del archivo */
-.file-info {
-    color: var(--gray);
-    font-size: 13px;
-    margin-bottom: 15px;
+.signer-info {
     flex: 1;
 }
 
-.file-info div {
-    margin-bottom: 4px;
+.signer-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--dark);
+}
+
+.signer-date {
+    font-size: 12px;
+    color: var(--gray);
+}
+
+/* Ajustar el grid para las nuevas secciones */
+.files-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.file-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s;
+    border: 1px solid #e1e5e9;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.file-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Asegurar que el badge de firmado se vea bien */
+.signed-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--success);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
 }
 
-.file-info i {
-    width: 14px;
-    text-align: center;
+/* Ajustes para el logo */
+.logo-image-small {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
 }
 
-/* Ajustes para pantallas pequeñas */
+/* Ajustar el sidebar para quitar el espacio de usuarios conectados */
+.sidebar {
+    justify-content: flex-start;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-    .file-preview-image {
-        height: 100px;
+    .files-grid {
+        grid-template-columns: 1fr;
     }
     
-    .file-preview.pdf-preview {
-        padding: 10px;
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
     }
     
-    .file-preview.pdf-preview i {
-        font-size: 36px;
+    .signer {
+        padding: 6px;
     }
 }

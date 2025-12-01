@@ -94,8 +94,6 @@
                     </a>
                 </li>
             </ul>
-            
-            <!-- Eliminada la sección de usuarios conectados -->
         </div>
         
         <!-- Main Content -->
@@ -158,7 +156,7 @@
                         </div>
                         
                         <div class="status-bar">
-                            <div id="connectionStatus"><i class="fas fa-circle" style="color: #96c77a;"></i> Conectado</div>
+                            <div id="connectionStatus"><i class="fas fa-circle" style="color: #96c77a;"></i> Conectado: <span id="connectedUsers">3 usuarios</span></div>
                             <div id="lastUpdate">Última actualización: <span id="updateTime">Nunca</span></div>
                         </div>
                     </div>
@@ -253,7 +251,7 @@
                                     <i class="fas fa-trash"></i> Limpiar
                                 </button>
                                 <button class="btn btn-primary btn-sm" id="saveDocumentWithSignatures">
-                                    <i class="fas fa-save"></i> Guardar Documento
+                                    <i class="fas fa-save"></i> Guardar
                                 </button>
                             </div>
                         </div>
@@ -299,31 +297,64 @@
                         <div id="filesCount">0 archivos</div>
                     </div>
                     
-                    <!-- BARRA DE BÚSQUEDA -->
-                    <div class="search-container">
-                        <div class="search-box">
-                            <i class="fas fa-search"></i>
-                            <input type="text" id="fileSearchInput" placeholder="Buscar archivos por nombre...">
+                    <!-- BARRA DE BÚSQUEDA AGREGADA -->
+                    <div class="search-container" style="padding: 15px 20px; background: #f8f9fa; border-bottom: 1px solid #e1e5e9;">
+                        <div class="search-box" style="position: relative;">
+                            <i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #6c8789;"></i>
+                            <input type="text" id="fileSearchInput" placeholder="Buscar archivos por nombre..." 
+                                   style="width: 100%; padding: 12px 15px 12px 45px; border: 1px solid #e1e5e9; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.3s;">
                         </div>
                     </div>
                     
+                    <!-- Reemplazar todo el contenido de <div class="files-content"> por: -->
                     <div class="files-content">
                         <div class="upload-area" id="uploadArea">
                             <div class="upload-icon">
                                 <i class="fas fa-cloud-upload-alt"></i>
                             </div>
                             <h3 class="upload-text">Arrastra archivos aquí o haz clic para subir</h3>
-                            <button class="btn btn-outline" id="selectFilesBtn">Seleccionar Archivos</button>
+                            <button class="btn btn-outline">Seleccionar Archivos</button>
                             <input type="file" id="fileInput" class="file-input" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.zip,.rar">
                         </div>
                         
-                        <div class="files-grid" id="filesGrid">
-                            <div class="no-files" id="noFiles">
-                                <div class="no-files-icon">
-                                    <i class="fas fa-folder-open"></i>
+                        <div class="file-preview-container" id="filePreviewContainer" style="display: none;">
+                            <h3>Vista Previa de Archivos</h3>
+                            <div class="file-previews" id="filePreviews">
+                                <!-- Las vistas previas se insertarán aquí -->
+                            </div>
+                        </div>
+                        
+                        <!-- SECCIÓN DE ARCHIVOS SUBIDOS -->
+                        <div class="files-section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-upload"></i> Archivos Subidos</h3>
+                                <span id="uploadedFilesCount">0 archivos</span>
+                            </div>
+                            <div class="files-grid" id="uploadedFilesGrid">
+                                <div class="no-files" id="noUploadedFiles">
+                                    <div class="no-files-icon">
+                                        <i class="fas fa-upload"></i>
+                                    </div>
+                                    <h3>No hay archivos subidos</h3>
+                                    <p>Sube tu primer archivo para comenzar</p>
                                 </div>
-                                <h3>No hay archivos</h3>
-                                <p>Sube tu primer archivo para comenzar</p>
+                            </div>
+                        </div>
+                        
+                        <!-- SECCIÓN DE ARCHIVOS FIRMADOS -->
+                        <div class="files-section">
+                            <div class="section-header">
+                                <h3><i class="fas fa-signature"></i> Archivos Firmados</h3>
+                                <span id="signedFilesCount">0 archivos</span>
+                            </div>
+                            <div class="files-grid" id="signedFilesGrid">
+                                <div class="no-files" id="noSignedFiles">
+                                    <div class="no-files-icon">
+                                        <i class="fas fa-signature"></i>
+                                    </div>
+                                    <h3>No hay archivos firmados</h3>
+                                    <p>Los documentos firmados aparecerán aquí</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -358,10 +389,6 @@
             <div class="page" id="settings-page">
                 <div class="header">
                     <h2><i class="fas fa-cog"></i> Configuración</h2>
-                    <button class="btn btn-primary" id="saveSettingsBtn">
-                        <span class="btn-icon"><i class="fas fa-save"></i></span>
-                        Guardar Cambios
-                    </button>
                 </div>
                 
                 <div class="settings-container">
@@ -375,17 +402,12 @@
                             
                             <div class="form-group">
                                 <label class="form-label">Nombre Completo</label>
-                                <input type="text" class="form-control" id="userFullName" 
-                                    placeholder="Ingresa tu nombre completo">
+                                <input type="text" class="form-control" id="userFullName" value="Juan Díaz">
                             </div>
                             
                             <div class="form-group">
                                 <label class="form-label">Correo Electrónico</label>
-                                <input type="email" class="form-control" id="userEmail" 
-                                    placeholder="tu@email.com" readonly>
-                                <small style="color: #6c8789; font-size: 12px; margin-top: 5px; display: block;">
-                                    El correo electrónico no se puede modificar directamente
-                                </small>
+                                <input type="email" class="form-control" id="userEmail" value="admin@centedocs.com">
                             </div>
                         </div>
                         
@@ -427,6 +449,8 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
     <!-- Notificación -->
     <div class="notification" id="notification">
@@ -468,7 +492,7 @@
             <div id="previewContent">
                 <!-- El contenido de previsualización se cargará aquí -->
             </div>
-            <div class="preview-actions">
+            <div class="preview-actions" style="padding: 20px; text-align: center; border-top: 1px solid #e1e5e9;">
                 <button class="btn btn-primary" id="downloadPreviewBtn">
                     <i class="fas fa-download"></i> Descargar Documento
                 </button>
@@ -505,15 +529,7 @@
         };
 
         // Inicializar Firebase
-        try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            console.log('Firebase inicializado correctamente');
-        } catch (error) {
-            console.error('Error inicializando Firebase:', error);
-            window.firebaseError = true;
-        }
+        firebase.initializeApp(firebaseConfig);
     </script>
 
     <script src="app.js"></script>
