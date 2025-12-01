@@ -184,10 +184,10 @@ class AuthService {
                 uid: user.uid,
                 email: user.email,
                 name: name,
-                role: 'owner',
+                role: 'user',
                 avatar: name.substring(0, 2).toUpperCase(),
                 createdAt: new Date(),
-                permissions: ['read', 'write', 'share']
+                permissions: ['read', 'write']
             };
 
             const storage = new CloudStorageService();
@@ -279,16 +279,12 @@ class AuthService {
                 if (userData) {
                     currentUser = userData;
                     
-                    // Actualizar interfaz de usuario
+                    // Actualizar interfaz de usuario - SIN ETIQUETA DE PROPIETARIO
                     const currentUserName = document.getElementById('currentUserName');
                     const userAvatar = document.getElementById('userAvatar');
-                    const userRoleBadge = document.getElementById('userRoleBadge');
                     
                     if (currentUserName) currentUserName.textContent = userData.name;
                     if (userAvatar) userAvatar.textContent = userData.avatar;
-                    if (userRoleBadge) {
-                        userRoleBadge.textContent = 'Propietario';
-                    }
                     
                     // Generar firma automática
                     await SignatureGenerator.createUserSignature(userData).then(signature => {
@@ -306,6 +302,9 @@ class AuthService {
                     CollaborationService.renderCollaborators();
                     FileService.loadAllDocuments();
                     DocumentService.renderDocumentSelector();
+                    
+                    // Cargar configuración del usuario
+                    SettingsService.loadUserSettings();
                     
                     showNotification(`¡Bienvenido a Cente Docs, ${userData.name}!`);
                 }
@@ -563,11 +562,35 @@ class FileService {
             '<span class="file-status-badge signed">Firmado</span>' : 
             '<span class="file-status-badge uploaded">Por firmar</span>';
         
+        // Generar vista previa según el tipo de archivo
+        let previewContent = '';
+        
+        if (file.type && file.type.startsWith('image/')) {
+            previewContent = `
+                <div class="file-preview-image">
+                    <img src="${file.url}" alt="${file.name}" 
+                         style="width: 100%; height: 120px; object-fit: cover; border-radius: 6px;">
+                </div>
+            `;
+        } else if (file.type && file.type === 'application/pdf') {
+            previewContent = `
+                <div class="file-preview pdf-preview">
+                    <i class="fas fa-file-pdf" style="font-size: 48px; color: #e74c3c;"></i>
+                    <div style="margin-top: 8px; font-size: 12px;">PDF Document</div>
+                    <div class="file-extension">.pdf</div>
+                </div>
+            `;
+        } else {
+            previewContent = `
+                <div class="file-icon">
+                    <i class="${fileInfo.icon}" style="color: ${fileInfo.color}; font-size: 36px;"></i>
+                    ${statusBadge}
+                </div>
+            `;
+        }
+        
         fileCard.innerHTML = `
-            <div class="file-icon">
-                <i class="${fileInfo.icon}" style="color: ${fileInfo.color}; font-size: 36px;"></i>
-                ${statusBadge}
-            </div>
+            ${previewContent}
             ${signedBadge}
             <div class="file-name">${file.name}</div>
             <div class="file-info">
@@ -657,9 +680,9 @@ class FileService {
         showNotification(`Abriendo vista previa de: ${file.name}`, 'success');
         
         // Si es una imagen, mostrar en modal
-        if (file.type.startsWith('image/')) {
+        if (file.type && file.type.startsWith('image/')) {
             this.showImagePreview(file);
-        } else if (file.type === 'application/pdf') {
+        } else if (file.type && file.type === 'application/pdf') {
             this.showPdfPreview(file);
         } else {
             // Para otros tipos, abrir en nueva pestaña o mostrar información
@@ -840,77 +863,77 @@ class SignatureGenerator {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            const width = 500;
-            const height = 120;
-            canvas.width = width;
-            canvas.height = height;
+        const width = 500;
+        const height = 120;
+        canvas.width = width;
+        canvas.height = height;
+        
+        ctx.clearRect(0, 0, width, height);
+        
+        const name = user.name;
+        let nameLines = this.splitNameForLeftSide(name);
+        
+        const leftWidth = 250;
+        
+        ctx.font = 'bold 22px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+        ctx.fillStyle = '#2f6c46';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        
+        let nameY = (height - (nameLines.length * 26)) / 2;
+        nameLines.forEach(line => {
+            ctx.fillText(line, 15, nameY);
+            nameY += 26;
+        });
+        
+        ctx.strokeStyle = '#2f6c46';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(leftWidth + 5, 15);
+        ctx.lineTo(leftWidth + 5, height - 15);
+        ctx.stroke();
+        
+        ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+        ctx.fillStyle = '#333333';
+        ctx.textAlign = 'left';
+        
+        const now = new Date();
+        const formattedDate = this.formatDate(now);
+        
+        const lines = [
+            `Firmado digitalmente por:`,
+            `${user.name}`,
+            `Fecha: ${formattedDate}`
+        ];
+        
+        let y = 25;
+        const rightStartX = leftWidth + 15;
+        
+        lines.forEach(line => {
+            if (line.startsWith('Firmado digitalmente')) {
+                ctx.font = 'bold 14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+            } else if (line === user.name) {
+                ctx.font = 'bold 16px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+                ctx.fillStyle = '#2f6c46';
+            } else {
+                ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
+                ctx.fillStyle = '#333333';
+            }
             
-            ctx.clearRect(0, 0, width, height);
-            
-            const name = user.name;
-            let nameLines = this.splitNameForLeftSide(name);
-            
-            const leftWidth = 250;
-            
-            ctx.font = 'bold 22px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-            ctx.fillStyle = '#2f6c46';
-            ctx.textAlign = 'left';
-            ctx.textBaseline = 'top';
-            
-            let nameY = (height - (nameLines.length * 26)) / 2;
-            nameLines.forEach(line => {
-                ctx.fillText(line, 15, nameY);
-                nameY += 26;
-            });
-            
-            ctx.strokeStyle = '#2f6c46';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(leftWidth + 5, 15);
-            ctx.lineTo(leftWidth + 5, height - 15);
-            ctx.stroke();
-            
-            ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-            ctx.fillStyle = '#333333';
-            ctx.textAlign = 'left';
-            
-            const now = new Date();
-            const formattedDate = this.formatDate(now);
-            
-            const lines = [
-                `Firmado digitalmente por:`,
-                `${user.name}`,
-                `Fecha: ${formattedDate}`
-            ];
-            
-            let y = 25;
-            const rightStartX = leftWidth + 15;
-            
-            lines.forEach(line => {
-                if (line.startsWith('Firmado digitalmente')) {
-                    ctx.font = 'bold 14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-                } else if (line === user.name) {
-                    ctx.font = 'bold 16px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-                    ctx.fillStyle = '#2f6c46';
-                } else {
-                    ctx.font = '14px "Segoe UI", Tahoma, Geneva, Verdana, sans-serif';
-                    ctx.fillStyle = '#333333';
-                }
-                
-                ctx.fillText(line, rightStartX, y);
-                y += 22;
-            });
-            
-            const dataURL = canvas.toDataURL('image/png');
-            
-            return {
-                data: dataURL,
-                type: 'auto',
-                fileName: `firma_automatica_${user.name.replace(/\s+/g, '_')}.png`,
-                userName: user.name,
-                userEmail: user.email,
-                timestamp: new Date()
-            };
+            ctx.fillText(line, rightStartX, y);
+            y += 22;
+        });
+        
+        const dataURL = canvas.toDataURL('image/png');
+        
+        return {
+            data: dataURL,
+            type: 'auto',
+            fileName: `firma_automatica_${user.name.replace(/\s+/g, '_')}.png`,
+            userName: user.name,
+            userEmail: user.email,
+            timestamp: new Date()
+        };
         } catch (error) {
             console.error('Error al generar firma automática:', error);
             throw error;
@@ -1621,6 +1644,48 @@ class DocumentService {
     }
 }
 
+// ===== SISTEMA DE CONFIGURACIÓN =====
+class SettingsService {
+    static async loadUserSettings() {
+        if (!currentUser) return;
+        
+        // Actualizar campos de configuración con datos reales
+        const userFullName = document.getElementById('userFullName');
+        const userEmail = document.getElementById('userEmail');
+        
+        if (userFullName) userFullName.value = currentUser.name;
+        if (userEmail) userEmail.value = currentUser.email;
+        
+        // Configurar evento para guardar cambios
+        this.setupSettingsListeners();
+    }
+    
+    static setupSettingsListeners() {
+        // Guardar cambios en nombre
+        document.getElementById('userFullName')?.addEventListener('change', async (e) => {
+            if (!currentUser) return;
+            
+            currentUser.name = e.target.value;
+            const storage = new CloudStorageService();
+            await storage.saveUser(currentUser);
+            
+            // Actualizar nombre en la barra lateral
+            const currentUserName = document.getElementById('currentUserName');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (currentUserName) currentUserName.textContent = currentUser.name;
+            if (userAvatar) userAvatar.textContent = currentUser.name.substring(0, 2).toUpperCase();
+            
+            showNotification('Nombre actualizado correctamente');
+        });
+        
+        // Guardar cambios en email (requeriría reautenticación en una app real)
+        document.getElementById('userEmail')?.addEventListener('change', (e) => {
+            showNotification('Para cambiar el correo electrónico, por favor contacta al soporte técnico', 'warning');
+        });
+    }
+}
+
 // ===== SISTEMA DE COLABORACIÓN (SIN BOTÓN DE REMOVER) =====
 class CollaborationService {
     static async renderCollaborators() {
@@ -1646,7 +1711,7 @@ class CollaborationService {
                         <div class="collaborator-name">${user.name}</div>
                         <div class="collaborator-email">${user.email}</div>
                         <div class="user-role-badge permission-${user.role}">
-                            ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
+                            ${user.role === 'owner' ? 'Administrador' : 'Usuario'}
                         </div>
                     </div>
                 `;
@@ -1701,6 +1766,9 @@ function switchPage(pageId) {
         CollaborationService.renderCollaborators();
     } else if (pageId === 'documents') {
         DocumentService.renderDocumentSelector();
+    } else if (pageId === 'settings') {
+        // Cargar configuración del usuario al acceder a la página
+        SettingsService.loadUserSettings();
     }
 }
 
@@ -2123,6 +2191,36 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('downloadPreviewBtn').addEventListener('click', function() {
         showNotification('Funcionalidad de descarga en desarrollo', 'info');
+    });
+    
+    // Configurar botón de guardar configuración
+    document.getElementById('saveSettingsBtn')?.addEventListener('click', async function() {
+        if (!currentUser) {
+            showNotification('Debes iniciar sesión para guardar cambios', 'error');
+            return;
+        }
+        
+        try {
+            const storage = new CloudStorageService();
+            
+            // Actualizar datos del usuario
+            currentUser.name = document.getElementById('userFullName').value;
+            
+            await storage.saveUser(currentUser);
+            
+            showNotification('Configuración guardada correctamente');
+            
+            // Actualizar interfaz
+            const currentUserName = document.getElementById('currentUserName');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (currentUserName) currentUserName.textContent = currentUser.name;
+            if (userAvatar) userAvatar.textContent = currentUser.name.substring(0, 2).toUpperCase();
+            
+        } catch (error) {
+            console.error('Error al guardar configuración:', error);
+            showNotification('Error al guardar la configuración', 'error');
+        }
     });
     
     // Cerrar modal al hacer clic fuera
