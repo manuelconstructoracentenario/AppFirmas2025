@@ -47,11 +47,19 @@ class CloudStorageService {
     // Documentos
     async saveDocument(doc) {
         try {
-            await this.db.collection('documents').doc(doc.id).set({
+            // Preparar el documento para Firestore
+            const firestoreDoc = {
                 ...doc,
                 uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            };
+            
+            // Si hay una propiedad que no es compatible con Firestore (como Blob o URL), removerla
+            delete firestoreDoc.url; // No podemos guardar URLs de objetos en Firestore
+            delete firestoreDoc.blob; // Tampoco Blobs
+            
+            // Guardar en Firestore
+            await this.db.collection('documents').doc(doc.id).set(firestoreDoc);
             return doc;
         } catch (error) {
             console.error('Error saving document to Firebase:', error);
@@ -126,6 +134,19 @@ class CloudStorageService {
             return [];
         }
     }
+}
+
+function handleFileError(file, error) {
+    console.error(`Error con archivo ${file.name}:`, error);
+    
+    // Crear un archivo de fallback
+    const fallbackFile = {
+        ...file,
+        error: true,
+        errorMessage: error.message
+    };
+    
+    return fallbackFile;
 }
 
 // Estado de la aplicación
@@ -223,10 +244,25 @@ class AuthService {
     }
 
     static logout() {
+        // Limpiar recursos antes de cerrar sesión
+        FileService.cleanup();
+        
+        // Limpiar documento actual
+        if (DocumentService.currentDocument && DocumentService.currentDocument.url && 
+            DocumentService.currentDocument.url.startsWith('blob:')) {
+            try {
+                URL.revokeObjectURL(DocumentService.currentDocument.url);
+            } catch (error) {
+                // Ignorar
+            }
+        }
+        
+        DocumentService.currentDocument = null;
+        DocumentService.documentSignatures = [];
+        AppState.currentSignature = null;
+        
+        // Cerrar sesión en Firebase
         firebase.auth().signOut();
-        AppState.currentUser = null;
-        AppState.currentDocument = null;
-        AppState.documentSignatures = [];
         
         showNotification('Sesión cerrada correctamente');
         
@@ -242,6 +278,7 @@ class AuthService {
         AppState.currentUser = user;
     }
 
+    // En AuthService.initAuthListener, mejorar el manejo de archivos:
     static initAuthListener() {
         firebase.auth().onAuthStateChanged(async (user) => {
             if (user) {
@@ -252,6 +289,7 @@ class AuthService {
                 if (userData) {
                     AuthService.setCurrentUser(userData);
                     
+                    // Actualizar UI
                     const currentUserName = document.getElementById('currentUserName');
                     const userAvatar = document.getElementById('userAvatar');
                     
@@ -266,19 +304,31 @@ class AuthService {
                         console.error('Error generating signature:', error);
                     }
                     
+                    // Mostrar aplicación
                     document.getElementById('loginScreen').style.display = 'none';
                     document.getElementById('appContainer').classList.add('active');
                     
-                    // CARGAR ARCHIVOS AL INICIAR SESIÓN
+                    // CARGAR ARCHIVOS CON MANEJO DE ERRORES
+                    console.log('Cargando archivos del usuario...');
                     try {
                         await FileService.loadUserDocuments();
+                        console.log('Archivos cargados:', FileService.files.length);
+                        
+                        // Actualizar vistas
                         DocumentService.renderDocumentSelector();
-                        FileService.renderFilesGrid();
+                        
+                        // Si estamos en la página de archivos, renderizar
+                        const filesPage = document.getElementById('files-page');
+                        if (filesPage && filesPage.classList.contains('active')) {
+                            FileService.renderFilesGrid();
+                        }
+                        
                     } catch (error) {
-                        console.error('Error loading files on login:', error);
+                        console.error('Error al cargar archivos:', error);
+                        showNotification('Algunos archivos no se pudieron cargar correctamente', 'warning');
                     }
                     
-                    CollaborationService.renderCollaborators();
+                    // Cargar actividades
                     ActivityService.loadRecentActivities();
                     
                     showNotification(`¡Bienvenido a Cente Docs, ${userData.name}!`);
@@ -286,7 +336,7 @@ class AuthService {
             } else {
                 console.log('No hay usuario autenticado');
                 AppState.currentUser = null;
-                FileService.files = []; // Limpiar archivos al cerrar sesión
+                FileService.files = [];
                 document.getElementById('loginScreen').style.display = 'flex';
                 document.getElementById('appContainer').classList.remove('active');
             }
@@ -306,13 +356,15 @@ class FileService {
             try {
                 const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
+                // Convertir archivo a base64
+                const base64Data = await this.fileToBase64(file);
+                
                 const fileData = {
                     id: fileId,
                     name: file.name,
                     type: file.type,
                     size: file.size,
-                    // Usar una URL temporal para archivos locales
-                    url: URL.createObjectURL(file),
+                    content: base64Data, // Guardar contenido como base64
                     uploadDate: new Date(),
                     uploadedBy: AppState.currentUser.uid,
                     uploadedByName: AppState.currentUser.name,
@@ -322,9 +374,12 @@ class FileService {
                 };
                 
                 await storage.saveDocument(fileData);
+                
+                // Crear URL temporal para uso inmediato
+                fileData.url = URL.createObjectURL(file);
                 uploadedFiles.push(fileData);
                 
-                // Agregar inmediatamente a la lista local
+                // Agregar a la lista local
                 this.files.push(fileData);
                 
                 await storage.saveActivity({
@@ -338,30 +393,76 @@ class FileService {
                 
             } catch (error) {
                 console.error('Error uploading file:', error);
-                showNotification(`Error al subir ${file.name}`, 'error');
+                showNotification(`Error al subir ${file.name}: ${error.message}`, 'error');
             }
         }
         
-        // Actualizar ambas vistas
         DocumentService.refreshDocumentSelector();
         this.renderFilesGrid();
         
         return uploadedFiles;
     }
+
+    // Agregar función para convertir archivo a base64
+    static fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    // Agregar función para convertir base64 a Blob
+    static base64ToBlob(base64, type) {
+        const binary = atob(base64.split(',')[1]);
+        const array = [];
+        for (let i = 0; i < binary.length; i++) {
+            array.push(binary.charCodeAt(i));
+        }
+        return new Blob([new Uint8Array(array)], { type: type });
+    }
     
     static async loadUserDocuments() {
         try {
             const storage = new CloudStorageService();
-            // Cambiar para usar getAllDocuments en lugar de getUserDocuments
-            // Esto cargará todos los documentos disponibles
             const documents = await storage.getAllDocuments();
             
-            // Filtrar por usuario actual o mostrar todos según sea necesario
-            // Para este caso, mostraremos todos los documentos disponibles
-            this.files = documents;
-            return documents;
+            // Procesar documentos para reconstruir URLs
+            const processedDocs = documents.map(doc => {
+                const processedDoc = { ...doc };
+                
+                // Si tenemos contenido base64 pero no URL, crear URL desde base64
+                if (processedDoc.content && !processedDoc.url) {
+                    try {
+                        // Para documentos grandes, podríamos usar data URLs directamente
+                        // pero para mejor performance, creamos Blob URLs
+                        const blob = this.base64ToBlob(processedDoc.content, processedDoc.type);
+                        processedDoc.url = URL.createObjectURL(blob);
+                        processedDoc.hasContent = true;
+                    } catch (error) {
+                        console.error('Error processing base64 content:', error);
+                        // Crear URL de fallback
+                        processedDoc.url = `data:${processedDoc.type};base64,placeholder`;
+                    }
+                } else if (!processedDoc.url) {
+                    // Si no hay URL ni contenido, crear URL de placeholder
+                    processedDoc.url = `data:${processedDoc.type};base64,placeholder`;
+                }
+                
+                // Asegurar que la fecha esté en formato Date
+                if (processedDoc.uploadDate && processedDoc.uploadDate.toDate) {
+                    processedDoc.uploadDate = processedDoc.uploadDate.toDate();
+                }
+                
+                return processedDoc;
+            });
+            
+            this.files = processedDocs;
+            return processedDocs;
         } catch (error) {
             console.error('Error loading documents:', error);
+            showNotification('Error al cargar archivos: ' + error.message, 'error');
             return [];
         }
     }
@@ -710,13 +811,34 @@ class FileService {
     static async downloadFile(fileId) {
         const file = this.files.find(f => f.id === fileId);
         if (file) {
-            const a = document.createElement('a');
-            a.href = file.url;
-            a.download = file.name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showNotification(`Descargando ${file.name}`);
+            try {
+                // Si el archivo tiene contenido base64, convertirlo
+                if (file.content && file.content.startsWith('data:')) {
+                    const response = await fetch(file.content);
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else if (file.url) {
+                    const a = document.createElement('a');
+                    a.href = file.url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+                
+                showNotification(`Descargando ${file.name}`);
+            } catch (error) {
+                console.error('Error downloading file:', error);
+                showNotification(`Error al descargar ${file.name}`, 'error');
+            }
         }
     }
     
@@ -768,12 +890,15 @@ class FileService {
         try {
             const storage = new CloudStorageService();
             
+            // Convertir el blob firmado a base64
+            const base64Data = await this.fileToBase64(signedBlob);
+            
             const signedFile = {
                 id: 'signed_' + Date.now(),
                 name: fileName,
                 type: signedBlob.type,
                 size: signedBlob.size,
-                url: URL.createObjectURL(signedBlob),
+                content: base64Data, // Guardar como base64
                 uploadDate: new Date(),
                 uploadedBy: AppState.currentUser.uid,
                 uploadedByName: AppState.currentUser.name,
@@ -785,6 +910,9 @@ class FileService {
 
             await storage.saveDocument(signedFile);
             
+            // Crear URL temporal para uso inmediato
+            signedFile.url = URL.createObjectURL(signedBlob);
+            
             await storage.saveActivity({
                 type: 'document_signed',
                 description: `Firmó el documento: ${fileName}`,
@@ -792,13 +920,17 @@ class FileService {
                 userName: AppState.currentUser.name
             });
             
-            await this.loadUserDocuments();
+            // Agregar a la lista local
+            this.files.push(signedFile);
+            
+            // Actualizar vistas
             this.renderFilesGrid();
             DocumentService.renderDocumentSelector();
             
             return signedFile;
         } catch (error) {
             console.error('Error adding signed document:', error);
+            showNotification('Error al guardar documento firmado: ' + error.message, 'error');
             throw error;
         }
     }
@@ -891,6 +1023,24 @@ class FileService {
                 noResults.remove();
             }
         }
+    }
+
+    static cleanup() {
+        console.log('Limpiando recursos de archivos...');
+        // Liberar todas las URLs de objetos (blob URLs) para evitar fugas de memoria
+        this.files.forEach(file => {
+            if (file.url && file.url.startsWith('blob:')) {
+                try {
+                    URL.revokeObjectURL(file.url);
+                    console.log('URL liberada para archivo:', file.name);
+                } catch (error) {
+                    // Ignorar errores al revocar URLs
+                    console.warn('Error al liberar URL para', file.name);
+                }
+            }
+        });
+        // Limpiar el array de archivos
+        this.files = [];
     }
 }
 
@@ -1102,57 +1252,53 @@ class DocumentService {
 
     static async loadDocument(file) {
         return new Promise((resolve) => {
-            setTimeout(() => {
-                this.documentSignatures = [];
-                this.currentSignature = null;
-                this.currentZoom = 1.0;
+            this.documentSignatures = [];
+            this.currentSignature = null;
+            this.currentZoom = 1.0;
 
-                const signatureLayer = document.getElementById('signatureLayer');
-                if (signatureLayer) {
-                    signatureLayer.innerHTML = '';
+            const signatureLayer = document.getElementById('signatureLayer');
+            if (signatureLayer) {
+                signatureLayer.innerHTML = '';
+            }
+
+            this.renderSignaturesList();
+
+            this.currentDocument = {
+                id: file.id,
+                name: file.name,
+                type: file.type,
+                url: file.url, // Usar la URL reconstruida
+                uploadDate: file.uploadDate || new Date(),
+                uploadedBy: file.uploadedBy || AppState.currentUser.uid,
+                uploadedByName: file.uploadedByName || AppState.currentUser.name,
+                signatures: file.signatures || [],
+                pages: file.pages || 1,
+                size: file.size,
+                extension: file.extension,
+                source: file.source || 'uploaded'
+            };
+            
+            if (file.signatures && file.signatures.length > 0) {
+                this.documentSignatures = [...file.signatures];
+            }
+            
+            setTimeout(async () => {
+                try {
+                    await this.renderDocument();
+                    this.renderDocumentSelector();
+                    this.renderSignaturesList();
+                    this.initializeDocumentInteractions();
+                    
+                    this.applyRealZoom();
+                    
+                    showNotification(`Documento "${file.name}" cargado`);
+                    resolve(this.currentDocument);
+                } catch (error) {
+                    console.error('Error al cargar documento:', error);
+                    showNotification('Error al cargar el documento: ' + error.message, 'error');
+                    resolve(null);
                 }
-
-                this.renderSignaturesList();
-
-                this.currentDocument = {
-                    id: file.id || 'doc_' + Date.now(),
-                    name: file.name,
-                    type: file.type,
-                    url: file.url || URL.createObjectURL(file),
-                    uploadDate: file.uploadDate || new Date(),
-                    uploadedBy: file.uploadedBy || AppState.currentUser.uid,
-                    uploadedByName: file.uploadedByName || AppState.currentUser.name,
-                    signatures: [],
-                    pages: file.pages || 1,
-                    size: file.size,
-                    extension: file.extension,
-                    source: file.source || 'uploaded'
-                };
-                
-                if (file.signatures && file.signatures.length > 0) {
-                    this.documentSignatures = [...file.signatures];
-                }
-                
-                setTimeout(async () => {
-                    try {
-                        await this.renderDocument();
-                        this.renderDocumentSelector();
-                        this.renderSignaturesList();
-                        this.initializeDocumentInteractions();
-                        
-                        this.applyRealZoom();
-                        
-                        syncFileSystem();
-                        
-                        resolve(this.currentDocument);
-                    } catch (error) {
-                        console.error('Error al cargar documento:', error);
-                        showNotification('Error al cargar el documento', 'error');
-                        resolve(null);
-                    }
-                }, 100);
-                
-            }, 500);
+            }, 100);
         });
     }
 
@@ -1233,7 +1379,15 @@ class DocumentService {
 
     static async renderPDFDocument(canvas, ctx) {
         try {
-            const loadingTask = pdfjsLib.getDocument(this.currentDocument.url);
+            let pdfUrl = this.currentDocument.url;
+            
+            // Si es un placeholder, mostrar mensaje
+            if (pdfUrl.includes('placeholder')) {
+                this.showPDFFallback(canvas, ctx);
+                return;
+            }
+            
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
             const pdf = await loadingTask.promise;
             const page = await pdf.getPage(1);
             
@@ -1260,11 +1414,11 @@ class DocumentService {
             
         } catch (error) {
             console.error('Error al renderizar PDF:', error);
-            this.renderPDFFallback(canvas, ctx);
+            this.showPDFFallback(canvas, ctx);
         }
     }
 
-    static renderPDFFallback(canvas, ctx) {
+    static showPDFFallback(canvas, ctx) {
         const optimalSize = this.calculateOptimalDocumentSize(800, 1000);
         canvas.width = optimalSize.width;
         canvas.height = optimalSize.height;
@@ -1281,17 +1435,30 @@ class DocumentService {
         
         ctx.fillStyle = '#2f6c46';
         ctx.font = 'bold 24px Arial';
-        ctx.fillText('DOCUMENTO PDF - ' + this.currentDocument.name, 50, 60);
+        ctx.textAlign = 'center';
+        ctx.fillText(this.currentDocument.name, canvas.width / 2, 60);
         
         ctx.fillStyle = '#333';
         ctx.font = '16px Arial';
-        ctx.fillText('Este es el contenido real del documento PDF subido.', 50, 100);
-        ctx.fillText('Documento subido por: ' + this.currentDocument.uploadedBy, 50, 130);
-        ctx.fillText('Fecha de subida: ' + this.currentDocument.uploadDate.toLocaleDateString(), 50, 160);
+        ctx.textAlign = 'left';
+        
+        const infoLines = [
+            'Documento cargado desde el sistema',
+            `Tipo: ${this.currentDocument.type}`,
+            `Tamaño: ${FileService.formatFileSize(this.currentDocument.size || 0)}`,
+            `Subido por: ${this.currentDocument.uploadedByName}`
+        ];
+        
+        let y = 100;
+        infoLines.forEach(line => {
+            ctx.fillText(line, 50, y);
+            y += 30;
+        });
         
         ctx.fillStyle = '#6c8789';
-        ctx.font = '12px Arial';
-        ctx.fillText('Página 1 de 1', canvas.width - 150, canvas.height - 30);
+        ctx.font = 'italic 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Para ver el contenido completo, descarga el archivo', canvas.width / 2, canvas.height - 50);
     }
 
     static async renderImageDocument(canvas, ctx) {
@@ -1932,6 +2099,21 @@ class DocumentService {
                 this.value = AppState.currentUser.email;
             });
         }
+    }
+   
+    static cleanup() {
+        console.log('Limpiando recursos de documentos...');
+        if (this.currentDocument && this.currentDocument.url && 
+            this.currentDocument.url.startsWith('blob:')) {
+            try {
+                URL.revokeObjectURL(this.currentDocument.url);
+            } catch (error) {
+                console.warn('Error al liberar URL del documento:', error);
+            }
+        }
+        this.currentDocument = null;
+        this.documentSignatures = [];
+        this.currentZoom = 1.0;
     }
 }
 
@@ -3087,4 +3269,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
     
     updateTimestamp();
+});
+
+window.addEventListener('beforeunload', function() {
+    console.log('Limpiando recursos antes de cerrar/recargar la página...');
+    
+    // Limpiar URLs de objetos para liberar memoria
+    FileService.cleanup();
+    
+    // También limpiar el documento actual si existe
+    if (DocumentService.currentDocument && DocumentService.currentDocument.url && 
+        DocumentService.currentDocument.url.startsWith('blob:')) {
+        try {
+            URL.revokeObjectURL(DocumentService.currentDocument.url);
+        } catch (error) {
+            // Ignorar errores
+        }
+    }
+    
+    // Limpiar firmas si existen
+    if (AppState.currentSignature && AppState.currentSignature.data && 
+        AppState.currentSignature.data.startsWith('blob:')) {
+        try {
+            URL.revokeObjectURL(AppState.currentSignature.data);
+        } catch (error) {
+            // Ignorar errores
+        }
+    }
 });
