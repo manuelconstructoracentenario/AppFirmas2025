@@ -2373,13 +2373,15 @@ DocumentService.saveDocumentWithSignatures = async function() {
         return;
     }
     
-    showNotification('Guardando documento firmado en alta calidad...');
+    showNotification('Guardando documento firmado...');
     
     try {
         const result = await DocumentExportService.combineSignaturesWithDocument();
         
-        DocumentExportService.downloadCombinedDocument(result.blob, result.fileName);
+        // QUITAMOS la línea que descarga automáticamente
+        // DocumentExportService.downloadCombinedDocument(result.blob, result.fileName);
         
+        // Solo guardamos en la nube
         await FileService.addSignedDocument(
             this.currentDocument.id,
             result.blob,
@@ -2391,7 +2393,7 @@ DocumentService.saveDocumentWithSignatures = async function() {
         this.renderExistingSignatures();
         this.renderSignaturesList();
         
-        showNotification('Documento firmado guardado exitosamente en alta calidad.');
+        showNotification('Documento firmado guardado exitosamente en la nube.');
 
     } catch (error) {
         console.error('Error al guardar documento con firmas:', error);
