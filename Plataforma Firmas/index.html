@@ -502,7 +502,7 @@
         </div>
     </div>
 
-            <!-- Agregar las dependencias necesarias -->
+    <!-- Agregar las dependencias necesarias -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -511,7 +511,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <!-- AGREGAR SUPABASE: -->
+    <!-- AGREGAR SUPABASE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
@@ -531,6 +531,13 @@
 
         // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
+
+        // CONFIGURACIÓN DE SUPABASE - REEMPLAZA CON TUS DATOS REALES
+        const SUPABASE_URL = 'https://tdsqpdkuxmjjvaqyeqwu.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkc3FwZGt1eG1qanZhcXllcXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk4NDMsImV4cCI6MjA4MDI2NTg0M30.6cIC3AR09Cci6rOWfvAaScAhCu0pehiH6qbOjhdyu-8';
+
+        // Inicializar Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     </script>
 
     <script src="app.js"></script>

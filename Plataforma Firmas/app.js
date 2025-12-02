@@ -1,8 +1,168 @@
-// Sistema de almacenamiento en la nube con Firebase
+// ============================================
+// SERVICIO DE SUPABASE STORAGE
+// ============================================
+
+class SupabaseStorageService {
+    constructor() {
+        this.client = supabase;
+        this.bucketName = 'centedocs';
+        this.maxFileSize = 50 * 1024 * 1024; // 50MB
+    }
+
+    /**
+     * Subir archivo a Supabase Storage
+     * @param {File} file - Archivo a subir
+     * @param {string} folder - Carpeta dentro del bucket
+     * @returns {Promise<Object>} Información del archivo subido
+     */
+    async uploadFile(file, folder = 'uploads') {
+        try {
+            // Validar tamaño del archivo
+            if (file.size > this.maxFileSize) {
+                throw new Error(`El archivo excede el tamaño máximo de ${this.maxFileSize / 1024 / 1024}MB`);
+            }
+
+            // Generar nombre único para el archivo
+            const timestamp = Date.now();
+            const randomString = Math.random().toString(36).substring(2, 10);
+            const fileExtension = file.name.split('.').pop();
+            const fileName = `${folder}/${timestamp}_${randomString}.${fileExtension}`;
+            
+            console.log('Subiendo a Supabase:', fileName);
+            
+            // Subir archivo a Supabase Storage
+            const { data, error } = await this.client.storage
+                .from(this.bucketName)
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                    contentType: file.type
+                });
+
+            if (error) {
+                console.error('Error subiendo a Supabase:', error);
+                throw error;
+            }
+
+            // Obtener URL pública del archivo
+            const { data: urlData } = this.client.storage
+                .from(this.bucketName)
+                .getPublicUrl(fileName);
+
+            return {
+                url: urlData.publicUrl,
+                path: data.path,
+                fileName: file.name,
+                size: file.size,
+                type: file.type,
+                uploadedAt: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error('Error en uploadFile:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Eliminar archivo de Supabase Storage
+     * @param {string} filePath - Ruta del archivo en el bucket
+     * @returns {Promise<boolean>} True si se eliminó correctamente
+     */
+    async deleteFile(filePath) {
+        try {
+            const { error } = await this.client.storage
+                .from(this.bucketName)
+                .remove([filePath]);
+            
+            if (error) {
+                console.error('Error eliminando archivo de Supabase:', error);
+                throw error;
+            }
+            
+            console.log('Archivo eliminado de Supabase:', filePath);
+            return true;
+            
+        } catch (error) {
+            console.error('Error en deleteFile:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Obtener URL de descarga de un archivo
+     * @param {string} filePath - Ruta del archivo
+     * @returns {string} URL pública del archivo
+     */
+    getFileUrl(filePath) {
+        const { data } = this.client.storage
+            .from(this.bucketName)
+            .getPublicUrl(filePath);
+        return data.publicUrl;
+    }
+
+    /**
+     * Listar archivos en un directorio
+     * @param {string} folder - Carpeta a listar
+     * @returns {Promise<Array>} Lista de archivos
+     */
+    async listFiles(folder = '') {
+        try {
+            const { data, error } = await this.client.storage
+                .from(this.bucketName)
+                .list(folder);
+            
+            if (error) {
+                console.error('Error listando archivos:', error);
+                throw error;
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('Error en listFiles:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Descargar archivo directamente
+     * @param {string} filePath - Ruta del archivo
+     * @param {string} fileName - Nombre para el archivo descargado
+     */
+    async downloadFile(filePath, fileName) {
+        try {
+            const { data, error } = await this.client.storage
+                .from(this.bucketName)
+                .download(filePath);
+            
+            if (error) {
+                console.error('Error descargando archivo:', error);
+                throw error;
+            }
+            
+            // Crear URL para descarga
+            const url = URL.createObjectURL(data);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName || filePath.split('/').pop();
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+        } catch (error) {
+            console.error('Error en downloadFile:', error);
+            throw error;
+        }
+    }
+}
+
+// Sistema de almacenamiento en la nube con Firebase (metadata) y Supabase (archivos)
 class CloudStorageService {
     constructor() {
         this.db = firebase.firestore();
         this.auth = firebase.auth();
+        this.supabase = new SupabaseStorageService();
     }
 
     // Usuarios
@@ -47,20 +207,51 @@ class CloudStorageService {
     // Documentos
     async saveDocument(doc) {
         try {
-            // Preparar el documento para Firestore
+            // Preparar documento para Firestore
             const firestoreDoc = {
                 ...doc,
                 uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
                 lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
             };
             
-            // Si hay una propiedad que no es compatible con Firestore (como Blob o URL), removerla
-            delete firestoreDoc.url; // No podemos guardar URLs de objetos en Firestore
-            delete firestoreDoc.blob; // Tampoco Blobs
+            // Si hay contenido base64, intentar subirlo a Supabase
+            if (doc.content && doc.content.startsWith('data:')) {
+                try {
+                    // Convertir base64 a Blob
+                    const base64Response = await fetch(doc.content);
+                    const blob = await base64Response.blob();
+                    
+                    // Subir a Supabase
+                    const supabaseResult = await this.supabase.uploadFile(
+                        new File([blob], doc.name, { type: doc.type }),
+                        `users/${doc.uploadedBy}`
+                    );
+                    
+                    // Actualizar documento con URL de Supabase
+                    firestoreDoc.supabase_url = supabaseResult.url;
+                    firestoreDoc.supabase_path = supabaseResult.path;
+                    firestoreDoc.url = supabaseResult.url;
+                    firestoreDoc.storage_provider = 'supabase';
+                    
+                    // Eliminar contenido base64 para ahorrar espacio
+                    delete firestoreDoc.content;
+                    
+                } catch (uploadError) {
+                    console.error('Error subiendo a Supabase:', uploadError);
+                    // Si falla Supabase, mantener el contenido base64 como fallback
+                    firestoreDoc.storage_provider = 'firestore';
+                }
+            }
             
-            // Guardar en Firestore
+            // Si ya tiene URL de Supabase, marcar como tal
+            if (doc.supabase_url) {
+                firestoreDoc.storage_provider = 'supabase';
+            }
+            
+            // Guardar metadata en Firestore
             await this.db.collection('documents').doc(doc.id).set(firestoreDoc);
-            return doc;
+            return firestoreDoc;
+            
         } catch (error) {
             console.error('Error saving document to Firebase:', error);
             throw error;
@@ -74,7 +265,14 @@ class CloudStorageService {
                 .orderBy('uploadDate', 'desc')
                 .get();
             
-            return snapshot.docs.map(doc => doc.data());
+            return snapshot.docs.map(doc => {
+                const data = doc.data();
+                // Asegurar que tenga URL
+                if (!data.url && data.supabase_url) {
+                    data.url = data.supabase_url;
+                }
+                return data;
+            });
         } catch (error) {
             console.error('Error getting user documents from Firebase:', error);
             return [];
@@ -87,7 +285,14 @@ class CloudStorageService {
                 .orderBy('uploadDate', 'desc')
                 .get();
             
-            return snapshot.docs.map(doc => doc.data());
+            return snapshot.docs.map(doc => {
+                const data = doc.data();
+                // Asegurar que tenga URL
+                if (!data.url && data.supabase_url) {
+                    data.url = data.supabase_url;
+                }
+                return data;
+            });
         } catch (error) {
             console.error('Error getting documents from Firebase:', error);
             return [];
@@ -96,8 +301,25 @@ class CloudStorageService {
 
     async deleteDocument(documentId) {
         try {
+            // Primero obtener el documento para eliminar el archivo de Supabase
+            const docRef = await this.db.collection('documents').doc(documentId).get();
+            if (docRef.exists) {
+                const docData = docRef.data();
+                
+                // Si tiene path de Supabase, eliminar el archivo
+                if (docData.supabase_path) {
+                    try {
+                        await this.supabase.deleteFile(docData.supabase_path);
+                    } catch (supabaseError) {
+                        console.warn('No se pudo eliminar de Supabase, continuando...', supabaseError);
+                    }
+                }
+            }
+            
+            // Luego eliminar la metadata de Firestore
             await this.db.collection('documents').doc(documentId).delete();
             return true;
+            
         } catch (error) {
             console.error('Error deleting document from Firebase:', error);
             throw error;
@@ -131,108 +353,6 @@ class CloudStorageService {
             return snapshot.docs.map(doc => doc.data());
         } catch (error) {
             console.error('Error getting activities from Firebase:', error);
-            return [];
-        }
-    }
-}
-
-// Después de la configuración de Firebase, agrega:
-const SUPABASE_CONFIG = {
-    url: 'https://tdsqpdkuxmjjvaqyeqwu.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkc3FwZGt1eG1qanZhcXllcXd1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODk4NDMsImV4cCI6MjA4MDI2NTg0M30.6cIC3AR09Cci6rOWfvAaScAhCu0pehiH6qbOjhdyu-8'
-};
-
-// Inicializar Supabase
-const supabase = supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
-
-// También puedes reemplazar Firestore por Supabase completamente si quieres
-class SupabaseService {
-    constructor() {
-        this.client = supabase;
-    }
-
-    async uploadFile(file, bucket = 'centedocs', folder = '') {
-        try {
-            // Generar nombre único para el archivo
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-            
-            console.log('Subiendo a Supabase:', fileName);
-            
-            // Subir archivo
-            const { data, error } = await this.client.storage
-                .from(bucket)
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (error) {
-                console.error('Error subiendo a Supabase:', error);
-                throw error;
-            }
-
-            // Obtener URL pública
-            const { data: urlData } = this.client.storage
-                .from(bucket)
-                .getPublicUrl(fileName);
-
-            return {
-                url: urlData.publicUrl,
-                path: data.path,
-                fullPath: `${bucket}/${data.path}`
-            };
-        } catch (error) {
-            console.error('Error en uploadFile:', error);
-            throw error;
-        }
-    }
-
-    async deleteFile(path, bucket = 'centedocs') {
-        try {
-            const { error } = await this.client.storage
-                .from(bucket)
-                .remove([path]);
-            
-            if (error) throw error;
-            return true;
-        } catch (error) {
-            console.error('Error eliminando archivo:', error);
-            throw error;
-        }
-    }
-
-    // Para mantener compatibilidad, podemos seguir usando Firestore para metadata
-    async saveDocumentMetadata(doc) {
-        try {
-            // Guardar en Firestore (o en Supabase PostgreSQL si prefieres)
-            const firebaseDoc = {
-                ...doc,
-                uploadDate: firebase.firestore.FieldValue.serverTimestamp(),
-                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            // Eliminar contenido base64 si existe
-            delete firebaseDoc.content;
-            delete firebaseDoc.url; // Ya tenemos supabase_url
-            
-            await firebase.firestore().collection('documents').doc(doc.id).set(firebaseDoc);
-            return doc;
-        } catch (error) {
-            console.error('Error guardando metadata:', error);
-            throw error;
-        }
-    }
-
-    async getDocuments() {
-        try {
-            const snapshot = await firebase.firestore().collection('documents')
-                .orderBy('uploadDate', 'desc')
-                .get();
-            
-            return snapshot.docs.map(doc => doc.data());
-        } catch (error) {
-            console.error('Error obteniendo documentos:', error);
             return [];
         }
     }
@@ -503,7 +623,7 @@ class AuthService {
                     
                     // CARGAR ARCHIVOS CON MANEJO DE ERRORES
                     console.log('Cargando archivos del usuario...');
-                   
+                    
                     try {
                         await FileService.loadUserDocuments();
                         console.log('Archivos cargados:', FileService.files.length);
@@ -551,47 +671,73 @@ class FileService {
     
     static async uploadFiles(files) {
         const uploadedFiles = [];
-        const supabaseService = new SupabaseService();
-        const firestoreService = new CloudStorageService();
+        const storage = new CloudStorageService();
         
         for (const file of Array.from(files)) {
             try {
                 const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
-                // Subir a Supabase Storage
-                showNotification(`Subiendo ${file.name} a la nube...`);
-                const supabaseResult = await supabaseService.uploadFile(
-                    file, 
-                    'centedocs', 
-                    `users/${AppState.currentUser.uid}/uploads`
-                );
+                // Comprimir archivo si es necesario (máximo 500KB)
+                let fileToUpload = file;
+                try {
+                    fileToUpload = await CompressionService.compressFile(file, 500);
+                } catch (compressionError) {
+                    showNotification(`Error: ${compressionError.message}`, 'error');
+                    continue;
+                }
                 
+                // Preparar datos del archivo
                 const fileData = {
                     id: fileId,
                     name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    supabase_url: supabaseResult.url,
-                    supabase_path: supabaseResult.path,
-                    url: supabaseResult.url, // URL pública de Supabase
+                    type: fileToUpload.type,
+                    size: fileToUpload.size,
                     uploadDate: new Date(),
                     uploadedBy: AppState.currentUser.uid,
                     uploadedByName: AppState.currentUser.name,
                     signatures: [],
                     extension: file.name.split('.').pop().toLowerCase(),
-                    source: 'uploaded',
-                    storage_provider: 'supabase'
+                    source: 'uploaded'
                 };
                 
-                // Guardar metadata en Firestore
-                await supabaseService.saveDocumentMetadata(fileData);
+                // Subir directamente a Supabase
+                try {
+                    showNotification(`Subiendo ${file.name} a la nube...`);
+                    
+                    // Subir a Supabase Storage
+                    const supabaseResult = await storage.supabase.uploadFile(
+                        fileToUpload,
+                        `users/${AppState.currentUser.uid}/uploads`
+                    );
+                    
+                    // Agregar URLs de Supabase
+                    fileData.supabase_url = supabaseResult.url;
+                    fileData.supabase_path = supabaseResult.path;
+                    fileData.url = supabaseResult.url;
+                    fileData.storage_provider = 'supabase';
+                    
+                    // Crear URL local temporal para vista previa inmediata
+                    fileData.local_url = URL.createObjectURL(file);
+                    
+                } catch (supabaseError) {
+                    console.error('Error subiendo a Supabase, usando base64 como fallback:', supabaseError);
+                    
+                    // Fallback: convertir a base64
+                    const base64Data = await this.fileToBase64(fileToUpload);
+                    fileData.content = base64Data;
+                    fileData.url = URL.createObjectURL(file);
+                    fileData.storage_provider = 'firestore';
+                    
+                    showNotification(`Subiendo ${file.name} (modo compatibilidad)...`, 'warning');
+                }
                 
-                // URL local temporal para vista previa inmediata
-                fileData.local_url = URL.createObjectURL(file);
+                // Guardar metadata en Firestore
+                await storage.saveDocument(fileData);
+                
                 uploadedFiles.push(fileData);
                 this.files.push(fileData);
                 
-                await firestoreService.saveActivity({
+                await storage.saveActivity({
                     type: 'file_upload',
                     description: `Subió el archivo: ${file.name}`,
                     documentName: file.name,
@@ -634,25 +780,39 @@ class FileService {
     
     static async loadUserDocuments() {
         try {
-            const supabaseService = new SupabaseService();
-            const documents = await supabaseService.getDocuments();
+            const storage = new CloudStorageService();
+            const documents = await storage.getAllDocuments();
             
             const processedDocs = documents.map(doc => {
                 const processedDoc = { ...doc };
                 
-                // Usar URL de Supabase si existe
+                // Priorizar URL de Supabase si existe
                 if (processedDoc.supabase_url) {
                     processedDoc.url = processedDoc.supabase_url;
                     processedDoc.storage_provider = 'supabase';
-                } else if (processedDoc.url) {
-                    // Para archivos antiguos con URL normal
-                    processedDoc.storage_provider = 'firestore';
-                } else {
-                    // URL de placeholder
+                }
+                // Si hay contenido base64, usarlo
+                else if (processedDoc.content && processedDoc.content.startsWith('data:')) {
+                    try {
+                        if (processedDoc.content.length < 2000000) {
+                            const blob = this.base64ToBlob(processedDoc.content, processedDoc.type);
+                            processedDoc.url = URL.createObjectURL(blob);
+                            processedDoc.storage_provider = 'firestore';
+                        } else {
+                            console.warn(`Archivo ${processedDoc.name} demasiado grande para procesar en memoria`);
+                            processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
+                            processedDoc.tooLarge = true;
+                        }
+                    } catch (error) {
+                        console.error('Error procesando archivo:', processedDoc.name, error);
+                        processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
+                    }
+                }
+                // Si no hay nada, usar placeholder
+                else {
                     processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
                 }
                 
-                // Convertir fecha
                 if (processedDoc.uploadDate && processedDoc.uploadDate.toDate) {
                     processedDoc.uploadDate = processedDoc.uploadDate.toDate();
                 }
@@ -664,7 +824,11 @@ class FileService {
             return processedDocs;
         } catch (error) {
             console.error('Error loading documents:', error);
-            showNotification('Error al cargar archivos: ' + error.message, 'error');
+            if (error.message.includes('quota') || error.message.includes('size')) {
+                showNotification('Algunos archivos son muy grandes. Se recomienda eliminar archivos grandes y usar archivos más pequeños.', 'warning');
+            } else {
+                showNotification('Error al cargar archivos: ' + error.message, 'error');
+            }
             return [];
         }
     }
@@ -837,7 +1001,7 @@ class FileService {
                 return dateB - dateA;
             });
             
-            // Renderizar archivos FIRMADOS primero (cambiar el orden aquí)
+            // Renderizar archivos FIRMADOS primero
             if (signedFiles.length === 0) {
                 noSignedFiles.style.display = 'block';
                 signedFilesGrid.innerHTML = '';
@@ -1082,101 +1246,46 @@ class FileService {
     
     static async downloadFile(fileId) {
         const file = this.files.find(f => f.id === fileId);
-        if (!file) {
-            showNotification('Archivo no encontrado', 'error');
-            return;
-        }
-        
-        try {
-            // Si es de Supabase, usar su URL directamente
-            if (file.supabase_url) {
-                const a = document.createElement('a');
-                a.href = file.supabase_url;
-                a.download = file.name;
-                a.target = '_blank';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } 
-            // Si tiene URL local
-            else if (file.url && file.url.startsWith('blob:')) {
-                const a = document.createElement('a');
-                a.href = file.url;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            } 
-            // Si es contenido base64 antiguo
-            else if (file.content) {
-                const response = await fetch(file.content);
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                URL.revokeObjectURL(url);
-            }
-            
-            showNotification(`Descargando ${file.name}`);
-        } catch (error) {
-            console.error('Error downloading file:', error);
-            showNotification(`Error al descargar ${file.name}`, 'error');
-        }
-    }
-
-    // Función opcional para migrar archivos antiguos a Supabase
-    static async migrateOldFilesToSupabase() {
-        const supabaseService = new SupabaseService();
-        
-        for (const file of this.files) {
-            // Si el archivo tiene contenido base64 pero no URL de Supabase
-            if (file.content && file.content.startsWith('data:') && !file.supabase_url) {
-                try {
-                    showNotification(`Migrando ${file.name}...`);
-                    
-                    // Convertir base64 a Blob
+        if (file) {
+            try {
+                // Si el archivo está en Supabase, usar la URL pública
+                if (file.supabase_url) {
+                    const a = document.createElement('a');
+                    a.href = file.supabase_url;
+                    a.download = file.name;
+                    a.target = '_blank'; // Abrir en nueva pestaña para descargar
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } 
+                // Si el archivo tiene contenido base64, convertirlo
+                else if (file.content && file.content.startsWith('data:')) {
                     const response = await fetch(file.content);
                     const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
                     
-                    // Subir a Supabase
-                    const fileObj = new File([blob], file.name, { type: file.type });
-                    const supabaseResult = await supabaseService.uploadFile(
-                        fileObj,
-                        'centedocs',
-                        `migrated/${file.uploadedBy}`
-                    );
-                    
-                    // Actualizar metadata
-                    file.supabase_url = supabaseResult.url;
-                    file.supabase_path = supabaseResult.path;
-                    file.url = supabaseResult.url;
-                    file.storage_provider = 'supabase';
-                    
-                    // Guardar en Firestore
-                    const firestoreDoc = { ...file };
-                    delete firestoreDoc.content; // Eliminar contenido pesado
-                    await firebase.firestore().collection('documents').doc(file.id).update({
-                        supabase_url: supabaseResult.url,
-                        supabase_path: supabaseResult.path,
-                        url: supabaseResult.url,
-                        storage_provider: 'supabase'
-                    });
-                    
-                    console.log(`Migrado: ${file.name}`);
-                } catch (error) {
-                    console.error(`Error migrando ${file.name}:`, error);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else if (file.url) {
+                    const a = document.createElement('a');
+                    a.href = file.url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                 }
+                
+                showNotification(`Descargando ${file.name}`);
+            } catch (error) {
+                console.error('Error downloading file:', error);
+                showNotification(`Error al descargar ${file.name}`, 'error');
             }
         }
-        
-        showNotification('Migración completada');
-        this.renderFilesGrid();
     }
     
     static shareFile(fileId) {
@@ -1195,8 +1304,20 @@ class FileService {
         if (file) {
             try {
                 const storage = new CloudStorageService();
+                
+                // Si el archivo está en Supabase, eliminarlo de allí
+                if (file.supabase_path) {
+                    try {
+                        await storage.supabase.deleteFile(file.supabase_path);
+                    } catch (supabaseError) {
+                        console.warn('No se pudo eliminar de Supabase:', supabaseError);
+                    }
+                }
+                
+                // Eliminar la metadata de Firestore
                 await storage.deleteDocument(fileId);
                 
+                // Eliminar del array local
                 this.files = this.files.filter(f => f.id !== fileId);
                 this.renderFilesGrid();
                 DocumentService.renderDocumentSelector();
@@ -1222,10 +1343,10 @@ class FileService {
         if (previewsContainer) previewsContainer.innerHTML = '';
         if (previewContainer) previewContainer.style.display = 'none';
     }
+    
     static async addSignedDocument(originalFileId, signedBlob, fileName, signatures) {
         try {
-            const supabaseService = new SupabaseService();
-            const firestoreService = new CloudStorageService();
+            const storage = new CloudStorageService();
             
             // Buscar el archivo original para obtener su nombre
             const originalFile = this.files.find(f => f.id === originalFileId);
@@ -1249,39 +1370,59 @@ class FileService {
                 type: signedBlob.type 
             });
             
-            // Subir a Supabase
-            showNotification('Subiendo documento firmado a la nube...');
-            const supabaseResult = await supabaseService.uploadFile(
-                signedFile,
-                'centedocs',
-                `users/${AppState.currentUser.uid}/signed`
-            );
+            // Comprimir archivo firmado
+            let compressedBlob = signedBlob;
+            try {
+                compressedBlob = await CompressionService.compressFile(signedFile, 500);
+            } catch (compressionError) {
+                throw new Error(`Archivo demasiado grande: ${compressionError.message}`);
+            }
             
             const signedFileData = {
                 id: 'signed_' + Date.now(),
                 name: signedFileName,
-                type: signedBlob.type,
-                size: signedBlob.size,
-                supabase_url: supabaseResult.url,
-                supabase_path: supabaseResult.path,
-                url: supabaseResult.url,
+                type: compressedBlob.type,
+                size: compressedBlob.size,
                 uploadDate: new Date(),
                 uploadedBy: AppState.currentUser.uid,
                 uploadedByName: AppState.currentUser.name,
                 signatures: signatures,
                 extension: signedFileName.split('.').pop().toLowerCase(),
                 source: 'signed',
-                originalFileId: originalFileId,
-                storage_provider: 'supabase'
+                originalFileId: originalFileId
             };
-
-            // Guardar metadata
-            await supabaseService.saveDocumentMetadata(signedFileData);
             
-            // URL local temporal para vista previa
-            signedFileData.local_url = URL.createObjectURL(signedBlob);
+            // Subir a Supabase
+            try {
+                showNotification('Subiendo documento firmado a la nube...');
+                
+                const supabaseResult = await storage.supabase.uploadFile(
+                    new File([compressedBlob], signedFileName, { type: compressedBlob.type }),
+                    `users/${AppState.currentUser.uid}/signed`
+                );
+                
+                signedFileData.supabase_url = supabaseResult.url;
+                signedFileData.supabase_path = supabaseResult.path;
+                signedFileData.url = supabaseResult.url;
+                signedFileData.storage_provider = 'supabase';
+                signedFileData.local_url = URL.createObjectURL(compressedBlob);
+                
+            } catch (supabaseError) {
+                console.error('Error subiendo a Supabase, usando base64 como fallback:', supabaseError);
+                
+                // Fallback: convertir a base64
+                const base64Data = await this.fileToBase64(new File([compressedBlob], signedFileName, { type: compressedBlob.type }));
+                signedFileData.content = base64Data;
+                signedFileData.url = URL.createObjectURL(compressedBlob);
+                signedFileData.storage_provider = 'firestore';
+                
+                showNotification('Guardando documento firmado (modo compatibilidad)...', 'warning');
+            }
             
-            await firestoreService.saveActivity({
+            // Guardar metadata en Firestore
+            await storage.saveDocument(signedFileData);
+            
+            await storage.saveActivity({
                 type: 'document_signed',
                 description: `Firmó el documento: ${signedFileName}`,
                 documentName: signedFileName,
@@ -1293,6 +1434,7 @@ class FileService {
             DocumentService.renderDocumentSelector();
             
             return signedFileData;
+            
         } catch (error) {
             console.error('Error adding signed document:', error);
             showNotification('Error al guardar documento firmado: ' + error.message, 'error');
@@ -1406,6 +1548,86 @@ class FileService {
         });
         // Limpiar el array de archivos
         this.files = [];
+    }
+    
+    /**
+     * Función para migrar archivos antiguos de base64 a Supabase Storage
+     */
+    static async migrateOldFilesToSupabase() {
+        if (!AppState.currentUser) {
+            showNotification('Debes iniciar sesión para migrar archivos', 'error');
+            return;
+        }
+        
+        const storage = new CloudStorageService();
+        const filesToMigrate = this.files.filter(file => 
+            file.content && file.content.startsWith('data:') && !file.supabase_url
+        );
+        
+        if (filesToMigrate.length === 0) {
+            showNotification('No hay archivos para migrar', 'info');
+            return;
+        }
+        
+        if (!confirm(`¿Migrar ${filesToMigrate.length} archivos antiguos a Supabase Storage?\nEsta operación puede tomar varios minutos.`)) {
+            return;
+        }
+        
+        showNotification(`Migrando ${filesToMigrate.length} archivos a Supabase...`, 'info');
+        
+        let migratedCount = 0;
+        let failedCount = 0;
+        
+        for (const file of filesToMigrate) {
+            try {
+                // Convertir base64 a Blob
+                const base64Response = await fetch(file.content);
+                const blob = await base64Response.blob();
+                
+                // Subir a Supabase
+                const supabaseResult = await storage.supabase.uploadFile(
+                    new File([blob], file.name, { type: file.type }),
+                    `users/${file.uploadedBy}/migrated`
+                );
+                
+                // Actualizar metadata
+                file.supabase_url = supabaseResult.url;
+                file.supabase_path = supabaseResult.path;
+                file.url = supabaseResult.url;
+                file.storage_provider = 'supabase';
+                
+                // Actualizar en Firestore
+                const docRef = firebase.firestore().collection('documents').doc(file.id);
+                await docRef.update({
+                    supabase_url: supabaseResult.url,
+                    supabase_path: supabaseResult.path,
+                    url: supabaseResult.url,
+                    storage_provider: 'supabase'
+                });
+                
+                // Liberar memoria
+                if (file.url && file.url.startsWith('blob:')) {
+                    URL.revokeObjectURL(file.url);
+                }
+                
+                migratedCount++;
+                
+                if (migratedCount % 5 === 0) {
+                    showNotification(`Migrados ${migratedCount}/${filesToMigrate.length} archivos...`);
+                }
+                
+            } catch (error) {
+                console.error(`Error migrando ${file.name}:`, error);
+                failedCount++;
+            }
+        }
+        
+        showNotification(`Migración completada: ${migratedCount} exitosas, ${failedCount} fallidas`, migratedCount > 0 ? 'success' : 'warning');
+        
+        // Recargar archivos
+        this.files = await this.loadUserDocuments();
+        this.renderFilesGrid();
+        DocumentService.renderDocumentSelector();
     }
 }
 
@@ -2627,8 +2849,10 @@ class DocumentExportService {
                         const y = parseFloat(signature.style.top) * scaleFactorY;
                         const width = parseFloat(signature.style.width) * scaleFactorX;
                         const height = parseFloat(signature.style.height) * scaleFactorY;
-                        
                         ctx.imageSmoothingEnabled = true;
+                        ctx.imageSmoothingQuality = 'high';
+                        ctx.drawImage(imgSignature, x, y, width, height);
+                                           ctx.imageSmoothingEnabled = true;
                         ctx.imageSmoothingQuality = 'high';
                         ctx.drawImage(imgSignature, x, y, width, height);
                     }
@@ -2735,9 +2959,6 @@ DocumentService.saveDocumentWithSignatures = async function() {
     
     try {
         const result = await DocumentExportService.combineSignaturesWithDocument();
-        
-        // QUITAMOS la línea que descarga automáticamente
-        // DocumentExportService.downloadCombinedDocument(result.blob, result.fileName);
         
         // Solo guardamos en la nube
         await FileService.addSignedDocument(
@@ -3023,6 +3244,23 @@ function switchPage(pageId) {
     
     if (pageId === 'files') {
         FileService.renderFilesGrid();
+        
+        // Agregar botón de migración si no existe
+        const filesHeader = document.querySelector('#files-page .header');
+        if (filesHeader && !document.getElementById('migrateBtn')) {
+            const migrateBtn = document.createElement('button');
+            migrateBtn.id = 'migrateBtn';
+            migrateBtn.className = 'btn btn-outline';
+            migrateBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Migrar a Supabase';
+            migrateBtn.style.marginLeft = '10px';
+            migrateBtn.title = 'Migrar archivos antiguos a Supabase Storage';
+            
+            migrateBtn.addEventListener('click', async () => {
+                await FileService.migrateOldFilesToSupabase();
+            });
+            
+            filesHeader.querySelector('.document-actions').appendChild(migrateBtn);
+        }
     } else if (pageId === 'collaborators') {
         CollaborationService.renderCollaborators();
     } else if (pageId === 'documents') {
