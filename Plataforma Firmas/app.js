@@ -691,42 +691,43 @@ class FileService {
                     }
                 });
                 
+                // Ordenar por fecha de firma (más reciente primero)
+                uniqueSigners.sort((a, b) => {
+                    const dateA = a.timestamp?.toDate?.() || a.timestamp || new Date(0);
+                    const dateB = b.timestamp?.toDate?.() || b.timestamp || new Date(0);
+                    return dateB - dateA;
+                });
+                
                 // Limitar a 5 firmantes para no saturar
                 const displayedSigners = uniqueSigners.slice(0, 5);
                 const extraCount = uniqueSigners.length - 5;
                 
                 signersInfo = `
-                    <div class="signers-list">
-                        <strong><i class="fas fa-users"></i> Firmado por (${uniqueSigners.length}):</strong>
-                        <div class="signers-icons">
+                    <div class="signers-section">
+                        <div class="signers-header">
+                            <i class="fas fa-users"></i> Firmado por (${uniqueSigners.length}):
+                        </div>
+                        <div class="signers-icons-container">
                             ${displayedSigners.map(signer => `
-                                <div class="signer-icon" data-tooltip="${signer.userName || 'Usuario'}">
+                                <div class="signer-icon-wrapper" title="${signer.userName || 'Usuario'}">
                                     <div class="signer-avatar-small">${signer.userName?.substring(0, 1).toUpperCase() || '?'}</div>
+                                    <div class="signer-name-tooltip">${signer.userName || 'Usuario'}</div>
                                 </div>
                             `).join('')}
                             ${extraCount > 0 ? `
-                                <div class="signer-icon-more" data-tooltip="${extraCount} persona(s) más">
+                                <div class="signer-icon-wrapper signer-more" title="${extraCount} persona(s) más">
                                     <div class="signer-avatar-small">+${extraCount}</div>
                                 </div>
                             ` : ''}
-                        </div>
-                        <div class="signers-tooltip" id="tooltip-${file.id}" style="display: none;">
-                            <div class="tooltip-content">
-                                ${uniqueSigners.map(signer => `
-                                    <div class="tooltip-signer">
-                                        <div class="tooltip-avatar">${signer.userName?.substring(0, 1).toUpperCase() || '?'}</div>
-                                        <div class="tooltip-name">${signer.userName || 'Usuario'}</div>
-                                        <div class="tooltip-date">${new Date(signer.timestamp?.toDate?.() || signer.timestamp || new Date()).toLocaleDateString('es-ES')}</div>
-                                    </div>
-                                `).join('')}
-                            </div>
                         </div>
                     </div>
                 `;
             } else {
                 signersInfo = `
-                    <div class="signers-list">
-                        <strong><i class="fas fa-users"></i> Firmado por:</strong>
+                    <div class="signers-section">
+                        <div class="signers-header">
+                            <i class="fas fa-users"></i> Firmado por:
+                        </div>
                         <div class="no-signers">No hay información de firmantes</div>
                     </div>
                 `;
@@ -768,30 +769,6 @@ class FileService {
                 </button>
             </div>
         `;
-        
-        // Agregar eventos para los tooltips
-        setTimeout(() => {
-            const signerIcons = fileCard.querySelectorAll('.signer-icon, .signer-icon-more');
-            const tooltip = fileCard.querySelector(`.signers-tooltip`);
-            
-            signerIcons.forEach(icon => {
-                icon.addEventListener('mouseenter', function(e) {
-                    if (tooltip) {
-                        tooltip.style.display = 'block';
-                        tooltip.style.position = 'absolute';
-                        tooltip.style.zIndex = '1000';
-                        tooltip.style.left = `${e.clientX + 10}px`;
-                        tooltip.style.top = `${e.clientY + 10}px`;
-                    }
-                });
-                
-                icon.addEventListener('mouseleave', function() {
-                    if (tooltip) {
-                        tooltip.style.display = 'none';
-                    }
-                });
-            });
-        }, 100);
         
         return fileCard;
     }
@@ -885,7 +862,6 @@ class FileService {
         if (previewsContainer) previewsContainer.innerHTML = '';
         if (previewContainer) previewContainer.style.display = 'none';
     }
-    
     static async addSignedDocument(originalFileId, signedBlob, fileName, signatures) {
         try {
             const storage = new CloudStorageService();
@@ -893,9 +869,40 @@ class FileService {
             // Convertir el blob firmado a base64
             const base64Data = await this.fileToBase64(signedBlob);
             
+            // BUSCAR EL ARCHIVO ORIGINAL PARA OBTENER SU NOMBRE
+            const originalFile = this.files.find(f => f.id === originalFileId);
+            let signedFileName = fileName;
+            
+            if (originalFile) {
+                // Extraer nombre y extensión del archivo original
+                const originalName = originalFile.name;
+                const extensionIndex = originalName.lastIndexOf('.');
+                
+                if (extensionIndex !== -1) {
+                    const nameWithoutExt = originalName.substring(0, extensionIndex);
+                    const extension = originalName.substring(extensionIndex);
+                    signedFileName = `${nameWithoutExt} (Firmado)${extension}`;
+                } else {
+                    signedFileName = `${originalName} (Firmado)`;
+                }
+            } else {
+                // Si no encontramos el archivo original, usar el nombre que viene
+                // pero aún así agregar "(Firmado)" si no lo tiene
+                if (!fileName.includes('(Firmado)')) {
+                    const extensionIndex = fileName.lastIndexOf('.');
+                    if (extensionIndex !== -1) {
+                        const nameWithoutExt = fileName.substring(0, extensionIndex);
+                        const extension = fileName.substring(extensionIndex);
+                        signedFileName = `${nameWithoutExt} (Firmado)${extension}`;
+                    } else {
+                        signedFileName = `${fileName} (Firmado)`;
+                    }
+                }
+            }
+            
             const signedFile = {
                 id: 'signed_' + Date.now(),
-                name: fileName,
+                name: signedFileName, // Usar el nuevo nombre
                 type: signedBlob.type,
                 size: signedBlob.size,
                 content: base64Data, // Guardar como base64
@@ -903,7 +910,7 @@ class FileService {
                 uploadedBy: AppState.currentUser.uid,
                 uploadedByName: AppState.currentUser.name,
                 signatures: signatures,
-                extension: fileName.split('.').pop().toLowerCase(),
+                extension: signedFileName.split('.').pop().toLowerCase(),
                 source: 'signed',
                 originalFileId: originalFileId
             };
@@ -915,8 +922,8 @@ class FileService {
             
             await storage.saveActivity({
                 type: 'document_signed',
-                description: `Firmó el documento: ${fileName}`,
-                documentName: fileName,
+                description: `Firmó el documento: ${signedFileName}`,
+                documentName: signedFileName,
                 userName: AppState.currentUser.name
             });
             
@@ -2579,23 +2586,16 @@ class CollaborationService {
             collaborators.forEach(user => {
                 const collaboratorItem = document.createElement('div');
                 collaboratorItem.className = 'collaborator-item';
+                
+                // QUITAR LA ETIQUETA DE PROPIETARIO Y EL BOTÓN DE REMOVER
                 collaboratorItem.innerHTML = `
                     <div class="collaborator-avatar">${user.avatar}</div>
                     <div class="collaborator-details">
                         <div class="collaborator-name">${user.name}</div>
                         <div class="collaborator-email">${user.email}</div>
-                        <div class="user-role-badge permission-${user.role}">
-                            ${user.role === 'owner' ? 'Propietario' : 'Usuario'}
-                        </div>
-                    </div>
-                    <div class="collaborator-actions">
-                        ${user.email !== AppState.currentUser?.email ? `
-                        <button class="btn btn-outline" onclick="CollaborationService.removeCollaborator('${user.email}')">
-                            Remover
-                        </button>
-                        ` : ''}
                     </div>
                 `;
+                
                 collaboratorsList.appendChild(collaboratorItem);
             });
             

@@ -3647,3 +3647,214 @@ canvas {
 .signers-tooltip::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+
+/* Estilos para la sección de firmantes mejorada */
+.signers-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e1e5e9;
+}
+
+.signers-header {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.signers-icons-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.signer-icon-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.signer-icon-wrapper:hover {
+    transform: translateY(-2px);
+}
+
+.signer-icon-wrapper:hover .signer-name-tooltip {
+    display: block;
+    opacity: 1;
+}
+
+.signer-avatar-small {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: 2px solid white;
+}
+
+.signer-more .signer-avatar-small {
+    background: var(--gray);
+    font-size: 10px;
+}
+
+.signer-name-tooltip {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+}
+
+.signer-name-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 5px 5px 5px;
+    border-style: solid;
+    border-color: transparent transparent rgba(0, 0, 0, 0.8) transparent;
+}
+
+.no-signers {
+    font-size: 12px;
+    color: var(--gray);
+    font-style: italic;
+    text-align: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+/* Ajustar el tamaño de la tarjeta de archivo para mejor visualización */
+.file-card {
+    min-height: 280px;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-info {
+    flex: 1;
+}
+
+/* Ajustar el botón de compartir para mantener consistencia */
+.file-actions {
+    margin-top: auto;
+}
+
+/* Ajustes para colaboradores */
+.collaborator-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2f6c46;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+
+.collaborator-item:hover {
+    background: #f0f7f0;
+    transform: translateX(5px);
+}
+
+.collaborator-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #599d5e 0%, #478252 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 15px;
+    font-weight: bold;
+    color: white;
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.collaborator-details {
+    flex: 1;
+}
+
+.collaborator-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+    color: var(--dark);
+    font-size: 15px;
+}
+
+.collaborator-email {
+    color: #6c8789;
+    font-size: 13px;
+}
+
+/* Quitar el espacio del botón de remover */
+.collaborator-actions {
+    display: none; /* Ocultar completamente */
+}
+
+/* Responsive para iconos de firmantes */
+@media (max-width: 768px) {
+    .signers-icons-container {
+        gap: 4px;
+    }
+    
+    .signer-avatar-small {
+        width: 24px;
+        height: 24px;
+        font-size: 10px;
+    }
+    
+    .signer-name-tooltip {
+        font-size: 11px;
+        padding: 4px 8px;
+        bottom: -30px;
+    }
+    
+    .collaborator-item {
+        padding: 12px;
+    }
+    
+    .collaborator-avatar {
+        width: 36px;
+        height: 36px;
+        margin-right: 12px;
+    }
+}
+
+/* Para pantallas muy pequeñas */
+@media (max-width: 480px) {
+    .signers-icons-container {
+        justify-content: center;
+    }
+    
+    .file-card {
+        min-height: auto;
+    }
+}
