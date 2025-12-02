@@ -136,6 +136,97 @@ class CloudStorageService {
     }
 }
 
+class CompressionService {
+    static async compressFile(file, maxSizeKB = 500) {
+        return new Promise((resolve, reject) => {
+            if (file.size <= maxSizeKB * 1024) {
+                resolve(file);
+                return;
+            }
+
+            // Si es imagen, comprimirla
+            if (file.type.startsWith('image/')) {
+                this.compressImage(file, maxSizeKB).then(resolve).catch(reject);
+            } 
+            // Si es PDF, no podemos comprimir fácilmente, mostrar error
+            else if (file.type === 'application/pdf') {
+                reject(new Error(`El PDF es demasiado grande. Máximo ${maxSizeKB}KB`));
+            }
+            // Para otros tipos, intentar reducir tamaño
+            else {
+                this.reduceFileSize(file, maxSizeKB).then(resolve).catch(reject);
+            }
+        });
+    }
+
+    static compressImage(file, maxSizeKB) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Calcular nuevo tamaño manteniendo relación de aspecto
+                    let width = img.width;
+                    let height = img.height;
+                    const maxDimension = 1200; // Máximo 1200px en cualquier dimensión
+                    
+                    if (width > height && width > maxDimension) {
+                        height = (height * maxDimension) / width;
+                        width = maxDimension;
+                    } else if (height > maxDimension) {
+                        width = (width * maxDimension) / height;
+                        height = maxDimension;
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    // Convertir a blob con calidad ajustable
+                    let quality = 0.8;
+                    canvas.toBlob((blob) => {
+                        if (blob.size > maxSizeKB * 1024 && quality > 0.3) {
+                            // Reducir calidad y reintentar
+                            quality -= 0.1;
+                            canvas.toBlob((newBlob) => {
+                                resolve(new File([newBlob], file.name, {
+                                    type: file.type,
+                                    lastModified: Date.now()
+                                }));
+                            }, file.type, quality);
+                        } else {
+                            resolve(new File([blob], file.name, {
+                                type: file.type,
+                                lastModified: Date.now()
+                            }));
+                        }
+                    }, file.type, quality);
+                };
+                img.onerror = reject;
+            };
+            reader.onerror = reject;
+        });
+    }
+
+    static reduceFileSize(file, maxSizeKB) {
+        return new Promise((resolve, reject) => {
+            if (file.size <= maxSizeKB * 1024) {
+                resolve(file);
+                return;
+            }
+            
+            // Para archivos no comprimibles, mostrar error
+            reject(new Error(`El archivo es demasiado grande. Máximo ${maxSizeKB}KB. Use archivos más pequeños.`));
+        });
+    }
+}
+
 function handleFileError(file, error) {
     console.error(`Error con archivo ${file.name}:`, error);
     
@@ -310,22 +401,30 @@ class AuthService {
                     
                     // CARGAR ARCHIVOS CON MANEJO DE ERRORES
                     console.log('Cargando archivos del usuario...');
+                   
                     try {
                         await FileService.loadUserDocuments();
                         console.log('Archivos cargados:', FileService.files.length);
                         
-                        // Actualizar vistas
+                        // Contar archivos que se cargaron correctamente
+                        const loadedFiles = FileService.files.filter(f => !f.tooLarge).length;
+                        const largeFiles = FileService.files.filter(f => f.tooLarge).length;
+                        
+                        if (largeFiles > 0) {
+                            showNotification(`${loadedFiles} archivos cargados, ${largeFiles} archivos muy grandes (descárguelos para ver)`, 'warning');
+                        } else {
+                            showNotification(`${loadedFiles} archivos cargados correctamente`);
+                        }
+                        
                         DocumentService.renderDocumentSelector();
                         
-                        // Si estamos en la página de archivos, renderizar
-                        const filesPage = document.getElementById('files-page');
-                        if (filesPage && filesPage.classList.contains('active')) {
+                        if (document.getElementById('files-page')?.classList.contains('active')) {
                             FileService.renderFilesGrid();
                         }
                         
                     } catch (error) {
                         console.error('Error al cargar archivos:', error);
-                        showNotification('Algunos archivos no se pudieron cargar correctamente', 'warning');
+                        showNotification('Algunos archivos no se pudieron cargar. Intente recargar la página.', 'warning');
                     }
                     
                     // Cargar actividades
@@ -356,15 +455,29 @@ class FileService {
             try {
                 const fileId = 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 
-                // Convertir archivo a base64
-                const base64Data = await this.fileToBase64(file);
+                // Comprimir archivo si es necesario (máximo 500KB)
+                let fileToUpload = file;
+                try {
+                    fileToUpload = await CompressionService.compressFile(file, 500);
+                } catch (compressionError) {
+                    showNotification(`Error: ${compressionError.message}`, 'error');
+                    continue;
+                }
+                
+                const base64Data = await this.fileToBase64(fileToUpload);
+                
+                // Verificar tamaño después de compresión
+                if (base64Data.length > 1000000) { // Aprox 1MB
+                    showNotification(`El archivo ${file.name} es demasiado grande después de comprimir. Intente con un archivo más pequeño.`, 'error');
+                    continue;
+                }
                 
                 const fileData = {
                     id: fileId,
                     name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    content: base64Data, // Guardar contenido como base64
+                    type: fileToUpload.type,
+                    size: fileToUpload.size,
+                    content: base64Data,
                     uploadDate: new Date(),
                     uploadedBy: AppState.currentUser.uid,
                     uploadedByName: AppState.currentUser.name,
@@ -375,11 +488,8 @@ class FileService {
                 
                 await storage.saveDocument(fileData);
                 
-                // Crear URL temporal para uso inmediato
                 fileData.url = URL.createObjectURL(file);
                 uploadedFiles.push(fileData);
-                
-                // Agregar a la lista local
                 this.files.push(fileData);
                 
                 await storage.saveActivity({
@@ -428,29 +538,30 @@ class FileService {
             const storage = new CloudStorageService();
             const documents = await storage.getAllDocuments();
             
-            // Procesar documentos para reconstruir URLs
             const processedDocs = documents.map(doc => {
                 const processedDoc = { ...doc };
                 
-                // Si tenemos contenido base64 pero no URL, crear URL desde base64
-                if (processedDoc.content && !processedDoc.url) {
+                // Solo procesar contenido si existe y no es muy grande
+                if (processedDoc.content) {
                     try {
-                        // Para documentos grandes, podríamos usar data URLs directamente
-                        // pero para mejor performance, creamos Blob URLs
-                        const blob = this.base64ToBlob(processedDoc.content, processedDoc.type);
-                        processedDoc.url = URL.createObjectURL(blob);
-                        processedDoc.hasContent = true;
+                        // Verificar que el contenido no exceda un límite razonable
+                        if (processedDoc.content.length < 2000000) { // 2MB
+                            const blob = this.base64ToBlob(processedDoc.content, processedDoc.type);
+                            processedDoc.url = URL.createObjectURL(blob);
+                        } else {
+                            // Para archivos muy grandes, usar placeholder
+                            console.warn(`Archivo ${processedDoc.name} demasiado grande para procesar en memoria`);
+                            processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
+                            processedDoc.tooLarge = true;
+                        }
                     } catch (error) {
-                        console.error('Error processing base64 content:', error);
-                        // Crear URL de fallback
-                        processedDoc.url = `data:${processedDoc.type};base64,placeholder`;
+                        console.error('Error procesando archivo:', processedDoc.name, error);
+                        processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
                     }
-                } else if (!processedDoc.url) {
-                    // Si no hay URL ni contenido, crear URL de placeholder
-                    processedDoc.url = `data:${processedDoc.type};base64,placeholder`;
+                } else {
+                    processedDoc.url = this.createPlaceholderURL(processedDoc.type, processedDoc.name);
                 }
                 
-                // Asegurar que la fecha esté en formato Date
                 if (processedDoc.uploadDate && processedDoc.uploadDate.toDate) {
                     processedDoc.uploadDate = processedDoc.uploadDate.toDate();
                 }
@@ -462,9 +573,31 @@ class FileService {
             return processedDocs;
         } catch (error) {
             console.error('Error loading documents:', error);
-            showNotification('Error al cargar archivos: ' + error.message, 'error');
+            // Mostrar mensaje específico
+            if (error.message.includes('quota') || error.message.includes('size')) {
+                showNotification('Algunos archivos son muy grandes. Se recomienda eliminar archivos grandes y usar archivos más pequeños.', 'warning');
+            } else {
+                showNotification('Error al cargar archivos: ' + error.message, 'error');
+            }
             return [];
         }
+    }
+
+    static createPlaceholderURL(type, name) {
+        // Crear URL de placeholder para archivos que no se pueden cargar
+        return `data:${type};base64,placeholder`;
+    }
+
+    // Agregar también en la clase FileService un método para manejar archivos grandes
+    static async handleLargeFile(fileId) {
+        const file = this.files.find(f => f.id === fileId);
+        if (!file) return;
+        
+        if (file.tooLarge) {
+            showNotification('Este archivo es muy grande para previsualizar. Por favor descárguelo para verlo.', 'warning');
+            return false;
+        }
+        return true;
     }
 
     static async loadAllDocuments() {
@@ -674,16 +807,15 @@ class FileService {
         
         let signedBadge = '';
         let signersInfo = '';
+        let largeFileWarning = '';
         
         if (isSigned) {
             signedBadge = '<div class="signed-badge"><i class="fas fa-signature"></i> Firmado</div>';
             
-            // Mostrar información de firmantes como iconos con tooltip
             if (file.signatures && file.signatures.length > 0) {
                 const uniqueSigners = [];
                 const seenSigners = new Set();
                 
-                // Obtener firmantes únicos
                 file.signatures.forEach(signature => {
                     if (!seenSigners.has(signature.userEmail)) {
                         seenSigners.add(signature.userEmail);
@@ -691,14 +823,12 @@ class FileService {
                     }
                 });
                 
-                // Ordenar por fecha de firma (más reciente primero)
                 uniqueSigners.sort((a, b) => {
                     const dateA = a.timestamp?.toDate?.() || a.timestamp || new Date(0);
                     const dateB = b.timestamp?.toDate?.() || b.timestamp || new Date(0);
                     return dateB - dateA;
                 });
                 
-                // Limitar a 5 firmantes para no saturar
                 const displayedSigners = uniqueSigners.slice(0, 5);
                 const extraCount = uniqueSigners.length - 5;
                 
@@ -711,7 +841,6 @@ class FileService {
                             ${displayedSigners.map(signer => `
                                 <div class="signer-icon-wrapper" title="${signer.userName || 'Usuario'}">
                                     <div class="signer-avatar-small">${signer.userName?.substring(0, 1).toUpperCase() || '?'}</div>
-                                    <div class="signer-name-tooltip">${signer.userName || 'Usuario'}</div>
                                 </div>
                             `).join('')}
                             ${extraCount > 0 ? `
@@ -722,16 +851,12 @@ class FileService {
                         </div>
                     </div>
                 `;
-            } else {
-                signersInfo = `
-                    <div class="signers-section">
-                        <div class="signers-header">
-                            <i class="fas fa-users"></i> Firmado por:
-                        </div>
-                        <div class="no-signers">No hay información de firmantes</div>
-                    </div>
-                `;
             }
+        }
+        
+        // Advertencia para archivos grandes
+        if (file.tooLarge) {
+            largeFileWarning = '<div class="large-file-warning"><i class="fas fa-exclamation-triangle"></i> Archivo grande</div>';
         }
         
         const fileDate = file.uploadDate?.toDate?.() || file.uploadDate || new Date();
@@ -741,13 +866,12 @@ class FileService {
             year: 'numeric'
         });
         
-        // MOSTRAR BOTÓN DE EDITAR/FIRMAR EN AMBOS TIPOS DE ARCHIVOS
-        // (archivos firmados pueden tener más firmas)
         fileCard.innerHTML = `
             <div class="file-icon">
                 <i class="${fileInfo.icon}" style="color: ${fileInfo.color};"></i>
             </div>
             ${signedBadge}
+            ${largeFileWarning}
             <div class="file-name">${file.name}</div>
             <div class="file-info">
                 <div><i class="fas fa-calendar"></i> ${isSigned ? 'Firmado' : 'Subido'}: ${formattedDate}</div>
@@ -760,17 +884,102 @@ class FileService {
                 <button class="file-action-btn download-btn" onclick="FileService.downloadFile('${file.id}')" title="Descargar">
                     <i class="fas fa-download"></i> Descargar
                 </button>
-                <!-- SIEMPRE MOSTRAR BOTÓN DE EDITAR/FIRMAR -->
+                <button class="file-action-btn preview-btn" onclick="FileService.previewFile('${file.id}')" title="Previsualizar">
+                    <i class="fas fa-eye"></i> Previsualizar
+                </button>
                 <button class="file-action-btn highlight sign-btn" onclick="FileService.editOrSignFile('${file.id}')" title="${isSigned ? 'Agregar más firmas' : 'Editar/Firmar'}">
                     <i class="fas fa-edit"></i> ${isSigned ? 'Agregar firma' : 'Editar/Firmar'}
-                </button>
-                <button class="file-action-btn share-btn" onclick="FileService.shareFile('${file.id}')" title="Compartir">
-                    <i class="fas fa-share"></i> Compartir
                 </button>
             </div>
         `;
         
         return fileCard;
+    }
+
+    static async previewFile(fileId) {
+        const file = this.files.find(f => f.id === fileId);
+        if (!file) {
+            showNotification('Archivo no encontrado', 'error');
+            return;
+        }
+        
+        // Verificar si el archivo es demasiado grande
+        if (file.tooLarge) {
+            showNotification('Este archivo es muy grande para previsualizar. Por favor descárguelo para verlo.', 'warning');
+            return;
+        }
+        
+        if (!file.url) {
+            showNotification('No se puede previsualizar el archivo', 'error');
+            return;
+        }
+        
+        try {
+            // Para PDFs, abrir en nueva ventana
+            if (file.type === 'application/pdf') {
+                window.open(file.url, '_blank', 'noopener,noreferrer');
+            } 
+            // Para imágenes, abrir en modal
+            else if (file.type.startsWith('image/')) {
+                this.showImagePreview(file.url, file.name);
+            }
+            // Para otros tipos, intentar abrir
+            else {
+                window.open(file.url, '_blank', 'noopener,noreferrer');
+            }
+        } catch (error) {
+            console.error('Error al previsualizar archivo:', error);
+            showNotification('Error al previsualizar el archivo', 'error');
+        }
+    }
+
+    static showImagePreview(imageUrl, imageName) {
+        const modal = document.createElement('div');
+        modal.className = 'image-preview-modal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            cursor: pointer;
+        `;
+        
+        modal.innerHTML = `
+            <div style="position: relative; max-width: 90%; max-height: 90%;">
+                <img src="${imageUrl}" alt="${imageName}" 
+                    style="max-width: 100%; max-height: 85vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+                <div style="position: absolute; top: -45px; right: 0; color: white; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+                    <span>${imageName}</span>
+                    <button onclick="this.closest('.image-preview-modal').remove()" 
+                            style="background: rgba(255,255,255,0.2); border: none; color: white; font-size: 20px; cursor: pointer; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        ×
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+        document.body.appendChild(modal);
+        
+        // Agregar tecla ESC para cerrar
+        const closeOnEsc = (e) => {
+            if (e.key === 'Escape') {
+                document.body.removeChild(modal);
+                document.removeEventListener('keydown', closeOnEsc);
+            }
+        };
+        document.addEventListener('keydown', closeOnEsc);
     }
 
     static async editOrSignFile(fileId) {
@@ -866,15 +1075,26 @@ class FileService {
         try {
             const storage = new CloudStorageService();
             
-            // Convertir el blob firmado a base64
-            const base64Data = await this.fileToBase64(signedBlob);
+            // Comprimir archivo firmado
+            let compressedBlob = signedBlob;
+            try {
+                const fileToCompress = new File([signedBlob], fileName, { type: signedBlob.type });
+                compressedBlob = await CompressionService.compressFile(fileToCompress, 500);
+            } catch (compressionError) {
+                throw new Error(`Archivo demasiado grande: ${compressionError.message}`);
+            }
             
-            // BUSCAR EL ARCHIVO ORIGINAL PARA OBTENER SU NOMBRE
+            const base64Data = await this.fileToBase64(compressedBlob);
+            
+            // Verificar tamaño
+            if (base64Data.length > 1000000) {
+                throw new Error('El documento firmado es demasiado grande. Intente con menos firmas o un documento más pequeño.');
+            }
+            
             const originalFile = this.files.find(f => f.id === originalFileId);
             let signedFileName = fileName;
             
             if (originalFile) {
-                // Extraer nombre y extensión del archivo original
                 const originalName = originalFile.name;
                 const extensionIndex = originalName.lastIndexOf('.');
                 
@@ -885,27 +1105,14 @@ class FileService {
                 } else {
                     signedFileName = `${originalName} (Firmado)`;
                 }
-            } else {
-                // Si no encontramos el archivo original, usar el nombre que viene
-                // pero aún así agregar "(Firmado)" si no lo tiene
-                if (!fileName.includes('(Firmado)')) {
-                    const extensionIndex = fileName.lastIndexOf('.');
-                    if (extensionIndex !== -1) {
-                        const nameWithoutExt = fileName.substring(0, extensionIndex);
-                        const extension = fileName.substring(extensionIndex);
-                        signedFileName = `${nameWithoutExt} (Firmado)${extension}`;
-                    } else {
-                        signedFileName = `${fileName} (Firmado)`;
-                    }
-                }
             }
             
             const signedFile = {
                 id: 'signed_' + Date.now(),
-                name: signedFileName, // Usar el nuevo nombre
-                type: signedBlob.type,
-                size: signedBlob.size,
-                content: base64Data, // Guardar como base64
+                name: signedFileName,
+                type: compressedBlob.type,
+                size: compressedBlob.size,
+                content: base64Data,
                 uploadDate: new Date(),
                 uploadedBy: AppState.currentUser.uid,
                 uploadedByName: AppState.currentUser.name,
@@ -917,8 +1124,7 @@ class FileService {
 
             await storage.saveDocument(signedFile);
             
-            // Crear URL temporal para uso inmediato
-            signedFile.url = URL.createObjectURL(signedBlob);
+            signedFile.url = URL.createObjectURL(compressedBlob);
             
             await storage.saveActivity({
                 type: 'document_signed',
@@ -927,10 +1133,7 @@ class FileService {
                 userName: AppState.currentUser.name
             });
             
-            // Agregar a la lista local
             this.files.push(signedFile);
-            
-            // Actualizar vistas
             this.renderFilesGrid();
             DocumentService.renderDocumentSelector();
             
@@ -2400,6 +2603,7 @@ DocumentService.saveDocumentWithSignatures = async function() {
         showNotification('Error al guardar el documento: ' + error.message, 'error');
     }
 };
+
 
 class PreviewService {
     static async showPreview(blob, type, fileName) {

@@ -3858,3 +3858,61 @@ canvas {
         min-height: auto;
     }
 }
+
+/* Estilos para botones de previsualización */
+.file-action-btn.preview-btn {
+    background: #f8f9fa;
+    color: #6c8789;
+    border: 1px solid #e1e5e9;
+}
+
+.file-action-btn.preview-btn:hover {
+    background: #e9ecef;
+    color: #2f6c46;
+    border-color: #2f6c46;
+}
+
+/* Advertencia para archivos grandes */
+.large-file-warning {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: #f59e0b;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 1;
+}
+
+/* Mejorar modal de previsualización de imagen */
+.image-preview-modal {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Para pantallas pequeñas */
+@media (max-width: 768px) {
+    .file-actions {
+        flex-direction: column;
+    }
+    
+    .file-action-btn {
+        width: 100%;
+        margin-bottom: 5px;
+        justify-content: center;
+    }
+    
+    .large-file-warning {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+}
